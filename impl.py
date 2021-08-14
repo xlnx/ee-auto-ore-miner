@@ -437,15 +437,12 @@ def main():
     stdout_handler = logging.StreamHandler(sys.stdout)
     handlers = [file_handler, stdout_handler]
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format=u'[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
         handlers=handlers,
         force=True
     )
 
-    value = get_storage_percent()
-    for _ in range(99):
-        cnt.add_and_test(value)
     while True:
         wnd_main_loop()
         sleep(30)
