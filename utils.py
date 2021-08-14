@@ -1,6 +1,7 @@
 import mss
 import math
 import time
+import random
 import win32gui
 import pyautogui
 import numpy as np
@@ -62,17 +63,23 @@ class WindowScreenshot():
                 return None
             return ix(x)
         x, y, z = key
-        y = slice(*[
-            f(_, self.window.iy) \
-            for _ in [y.start, y.stop, y.step]
-        ])
-        x = slice(*[
-            f(_, self.window.ix) \
-            for _ in [x.start, x.stop, x.step]
-        ])
+        if isinstance(y, slice):
+            y = slice(*[
+                f(_, self.window.iy)
+                for _ in [y.start, y.stop, y.step]
+            ])
+        else:
+            y = self.window.iy(y)
+        if isinstance(x, slice):
+            x = slice(*[
+                f(_, self.window.ix)
+                for _ in [x.start, x.stop, x.step]
+            ])
+        else:
+            x = self.window.ix(x)
         key = y, x, z
         return WindowScreenshot(
-            self.data[key], 
+            self.data[key],
             self.window
         )
 
@@ -93,6 +100,7 @@ class WindowScreenshot():
                 .replace(',', '')\
                 .replace('，', '')\
                 .replace('O', '0')\
+                .replace('@', '0')\
                 .replace('o', '0')\
                 .replace('l', '1')
         return res
@@ -113,10 +121,10 @@ def _absolute(*dims):
             return func(self, *args, **kwargs)
         return inner_impl
     return inner
-    
+
 
 class Window():
-    
+
     def __init__(self, rect):
         self.rect = rect
         self.x1, self.y1, self.x2, self.y2 = rect
@@ -158,8 +166,8 @@ class Window():
         duration = dur * (0.8 + dist * 1.0 / 500)
         pyautogui.moveTo(x1, y1)
         pyautogui.dragTo(
-            x2, y2, 
-            button='left', 
-            duration=duration, 
+            x2, y2,
+            button='left',
+            duration=duration,
             tween=ease
         )
