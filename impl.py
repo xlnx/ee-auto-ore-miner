@@ -106,6 +106,8 @@ def wnd_filter_target_list(
     need_stop: bool = True
 ) -> List[Tuple[int, str]]:
 
+    logging.debug('filter target list %d', filter_idx)
+
     # def wnd_refresh():
     #     wnd.drag_ease(-w2, h2, -w2, h2 + TARGET_LIST_REFRESH_DY)
     #     wnd.move_to(0, 0)
@@ -130,10 +132,12 @@ def wnd_filter_target_list(
 
 ###  TARGETS  ###
 def wnd_lock_target(target_idx: int) -> None:
+    logging.debug('lock %d', target_idx)
     _wnd_target_operation(target_idx, 0, wnd.click)
 
 
 def wnd_unlock_all_targets() -> None:
+    logging.debug('unlock all')
     for i in range(MAX_LOCK_TARGETS)[::-1]:
         y = 0.07
         x1, x2 = 0.30, 0.36
@@ -142,6 +146,7 @@ def wnd_unlock_all_targets() -> None:
 
 
 def wnd_approach_target(target_idx: int, dist: Optional[float] = None) -> None:
+    logging.debug('approach %d', target_idx)
     if dist is None:
         fn = wnd.click
     else:
@@ -150,6 +155,7 @@ def wnd_approach_target(target_idx: int, dist: Optional[float] = None) -> None:
 
 
 def wnd_orbit_target(target_idx: int, dist: Optional[float] = None) -> None:
+    logging.debug('orbit %d', target_idx)
     if dist is None:
         fn = wnd.click
     else:
@@ -162,6 +168,7 @@ def _wnd_target_operation(
     op_idx: int,
     cb: Callable[[float, float], None]
 ) -> None:
+    logging.debug('target %d, op %d', target_idx, op_idx)
     hi = h2 - h1
     ht = h1+hi*(target_idx+0.5)
     wnd.drag_ease(-w2, h2, -w2, h2+0.05)
@@ -176,6 +183,8 @@ def _wnd_target_operation(
 
 
 def _wnd_select_distance(x1: float, y1: float, dist: float) -> None:
+    logging.debug('select distance %f', dist)
+
     def ease(x):
         if x < 0.5:
             return x * 2
@@ -208,11 +217,12 @@ def get_navigate_speed() -> float:
     else:
         raise NotImplementedError()
     speed = parse_prefix_float(speed) * unit
-    logging.info('current speed is %s m/s', speed)
+    logging.debug('current speed is %s m/s', speed)
     return speed
 
 
 def wait_until_engine_stop(idle) -> None:
+    logging.debug('wait until engine stop')
     sleep(1)
     while get_navigate_speed() != 0:
         idle()
@@ -220,6 +230,7 @@ def wait_until_engine_stop(idle) -> None:
 
 
 def wnd_stop_navigate() -> None:
+    logging.debug('stop navigate')
     wnd.click(0.5, 0.5)
     sleep(1)
     wnd.click(0.5, 0.5)
@@ -227,6 +238,7 @@ def wnd_stop_navigate() -> None:
 
 
 def wnd_dock(target_idx) -> None:
+    logging.debug('dock %d', target_idx)
     targets = wnd_filter_target_list(2)
     d, s = targets[target_idx]
     logging.info('docking %s', s)
@@ -259,6 +271,7 @@ def wnd_undock() -> None:
 
 
 def wnd_warp_to_signal(target_idx: int, dist: Optional[float] = None) -> None:
+    logging.debug('warp %d', target_idx)
     if dist is None:
         fn = wnd.click
     else:
@@ -270,6 +283,7 @@ def wnd_warp_to_signal(target_idx: int, dist: Optional[float] = None) -> None:
 
 ###  DEVICES  ###
 def wnd_activate_device(row: int, col: int) -> None:
+    logging.debug('activate (%d, %d)', row, col)
     wi, hi = 0.04470, 0.08287
     w, h = wi*(2*col+1), hi*(2*row+1)
     wnd.click(-w, -h)
@@ -279,6 +293,7 @@ def wnd_activate_device(row: int, col: int) -> None:
 ###  SPACE STATION  ##
 @contextmanager
 def wnd_open_wirehouse() -> None:
+    logging.debug('open wirehouse')
     wnd.click(0.045, 0.156)
     sleep(3)
     yield
@@ -287,6 +302,7 @@ def wnd_open_wirehouse() -> None:
 
 
 def wnd_discharge_storage() -> None:
+    logging.debug('discharge storage')
     wnd.click(0.110, 0.764)
     sleep(2)
     wnd.click(-0.233, -0.095)
@@ -321,6 +337,7 @@ def get_opt_ore_targets(ores) -> List[Tuple[int, Ore]]:
 
 
 def wnd_try_deploy_mining_task() -> None:
+    logging.debug('try deploy mining task')
     while True:
         targets = wnd_filter_target_list(0)
         ores = [(d, Ore.from_text(t)) for d, t in targets]
@@ -352,7 +369,7 @@ def wnd_try_deploy_mining_task() -> None:
 def wnd_deploy_mining_tasks() -> None:
     if wnd_try_deploy_mining_task():
         return True
-    logging.warn('')
+    logging.warn('deploy failed, seeking asteroid belts')
     asteroid_belts = wnd_filter_target_list(1, need_stop=False)
     n = len(asteroid_belts)
     if n > 1:
@@ -416,7 +433,7 @@ def wnd_main_loop() -> None:
 
 
 def main():
-    file_handler = logging.FileHandler(filename='tmp.log')
+    file_handler = logging.FileHandler(filename='tmp.log', encoding='utf-8')
     stdout_handler = logging.StreamHandler(sys.stdout)
     handlers = [file_handler, stdout_handler]
     logging.basicConfig(
@@ -426,6 +443,9 @@ def main():
         force=True
     )
 
+    value = get_storage_percent()
+    for _ in range(99):
+        cnt.add_and_test(value)
     while True:
         wnd_main_loop()
         sleep(30)
