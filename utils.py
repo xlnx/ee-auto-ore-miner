@@ -102,7 +102,14 @@ class WindowScreenshot():
                 .replace('O', '0')\
                 .replace('@', '0')\
                 .replace('o', '0')\
-                .replace('l', '1')
+                .replace('l', '1')\
+                .replace('I', '1')\
+                .replace('i', '1')\
+                .replace('S', '5')\
+                .replace('s', '5')\
+                .replace('b', '6')\
+                .replace('B', '8')\
+                .replace('q', '9')
         return res
 
 

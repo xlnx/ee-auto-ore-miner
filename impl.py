@@ -30,7 +30,7 @@ h1, h2 = 0.078, 0.1736
 ###  DATA  ###
 def change_aspect() -> None:
     dy = (random.random() - 0.5) * 0.01
-    wnd.drag_ease(0.35, 0.01 + dy, 0.45, 0.01 - dy)
+    wnd.drag_ease(0.35, 0.5 + dy, 0.45, 0.5 - dy)
 
 
 def change_aspect_while_fail(func):
@@ -53,6 +53,7 @@ def get_storage_percent() -> float:
     g = g.map(lambda img: img * 2)
     g.save('storage.jpg')
     perc = g.ocr(numbers=True)
+    logging.debug('storage %s', perc)
 
     if perc[-1] != '%':
         raise NotImplementedError()
@@ -114,10 +115,10 @@ def wnd_filter_target_list(
 
     # apply overview filter
     wnd.click(-0.18, 0.04)
-    sleep(1)
+    sleep(2)
     h1, dh = 0.181, 0.0987
     wnd.click(-0.138, h1 + filter_idx * dh)
-    sleep(1)
+    sleep(2)
     if need_stop:
         wnd_stop_navigate()
     # for _ in range(3):
@@ -179,7 +180,7 @@ def _wnd_target_operation(
     x %= 1
     y %= 1
     cb(x, y)
-    sleep(0.5)
+    sleep(1)
 
 
 def _wnd_select_distance(x1: float, y1: float, dist: float) -> None:
@@ -207,6 +208,7 @@ def get_navigate_speed() -> float:
     ]
     speed.save('speed.jpg')
     speed = speed.ocr(numbers=True)
+    logging.debug('speed %s', speed)
     unit = 1
     if '天文单位' in speed:
         unit = 149597870700.0
@@ -225,6 +227,7 @@ def wait_until_engine_stop(idle) -> None:
     logging.debug('wait until engine stop')
     sleep(1)
     while get_navigate_speed() != 0:
+        change_aspect()
         idle()
         sleep(3)
 
@@ -239,13 +242,10 @@ def wnd_stop_navigate() -> None:
 
 def wnd_dock(target_idx) -> None:
     logging.debug('dock %d', target_idx)
-    targets = wnd_filter_target_list(2)
-    d, s = targets[target_idx]
+    targets = wnd_filter_target_list(2, need_stop=False)
+    _, s = targets[target_idx]
     logging.info('docking %s', s)
-    if d != 0:
-        _wnd_target_operation(target_idx, 0, wnd.click)
-    else:
-        _wnd_target_operation(target_idx, 1, wnd.click)
+    _wnd_target_operation(target_idx, 0, wnd.click)
     pts = [
         (0.11208642808912897, 0.31850961538461536),
         (0.13031735313977041, 0.31850961538461536),
@@ -340,9 +340,10 @@ def wnd_try_deploy_mining_task() -> None:
     logging.debug('try deploy mining task')
     while True:
         targets = wnd_filter_target_list(0)
+        logging.debug('targets: %s', targets)
         ores = [(d, Ore.from_text(t)) for d, t in targets]
         logging.info('found ores: %s', ores)
-        if len(ores) == 0 or ores[0][1] == Ore.Unknown:
+        if len(ores) == 0 or all(_[1] == Ore.Unknown for _ in ores):
             return False
         targets = get_opt_ore_targets(ores)
         logging.info('optimal targets: %s', [ores[i] for i in targets])
@@ -353,9 +354,10 @@ def wnd_try_deploy_mining_task() -> None:
             sleep(5)
             wnd_activate_device(0, 0)
             wnd_activate_device(0, 1)
-            wnd_orbit_target(targets[0], 2)
+            # wnd_orbit_target(targets[0], 2)
             return True
-        wnd_orbit_target(0, 2)
+        # wnd_orbit_target(0, 2)
+        wnd_orbit_target(0)
         di = 9999
         while di > 8:
             targets = get_overview_target_list(0, 1)
@@ -371,7 +373,9 @@ def wnd_deploy_mining_tasks() -> None:
         return True
     logging.warn('deploy failed, seeking asteroid belts')
     asteroid_belts = wnd_filter_target_list(1, need_stop=False)
+    asteroid_belts = [o for _, o in asteroid_belts if o != '']
     n = len(asteroid_belts)
+    logging.info('asteroid belts: %s', asteroid_belts)
     if n > 1:
         idx = random.randint(1, n - 1)
         wnd_warp_to_signal(idx)
@@ -403,7 +407,7 @@ class StorageCounter():
         self._arr = []
 
 
-cnt = StorageCounter(3)
+cnt = StorageCounter(4)
 
 
 def wnd_main_loop() -> None:
@@ -426,8 +430,15 @@ def wnd_main_loop() -> None:
             cnt.add_and_test(0)
     else:
         logging.info("deploy mining task")
-        if not wnd_deploy_mining_tasks():
+        for _ in range(3):
+            if wnd_deploy_mining_tasks():
+                break
+            change_aspect()
+        else:
             logging.warn("failed to deploy mining task, exit now")
+            wnd_dock()
+            with wnd_open_wirehouse():
+                wnd_discharge_storage()
             sys.exit(0)
         cnt.clear()
 
@@ -437,7 +448,7 @@ def main():
     stdout_handler = logging.StreamHandler(sys.stdout)
     handlers = [file_handler, stdout_handler]
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format=u'[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
         handlers=handlers,
         force=True
