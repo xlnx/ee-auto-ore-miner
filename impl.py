@@ -7,10 +7,14 @@ from typing import *
 from ore import Ore
 
 
+start_time = time.time()
+
+
 """ constant defs """
 TARGET_LIST_REFRESH_DY = 0.5
 MAX_LOCK_TARGETS = 5
 MAX_MINER_RANGE = 18
+MAX_MINING_HOURS = 12
 
 
 """ window property defs """
@@ -393,10 +397,12 @@ class StorageCounter():
             self._arr.append(value)
         elif len(self._arr) == self._max_tick:
             self._arr = self._arr[1:] + [value]
-            return any(value != _ for _ in self._arr)
         else:
             raise NotImplementedError()
-        return True
+        if len(self._arr) < self._max_tick:
+            return True
+        else:
+            return any(value != _ for _ in self._arr)
 
     def get(self):
         if len(self._arr) == 0:
@@ -410,7 +416,18 @@ class StorageCounter():
 cnt = StorageCounter(4)
 
 
+def wnd_exit() -> None:
+    wnd_dock(0)
+    with wnd_open_wirehouse():
+        wnd_discharge_storage()
+    wnd.close()
+    sys.exit(0)
+
+
 def wnd_main_loop() -> None:
+    t = time.time() - start_time
+    if t / 3600 >= MAX_MINING_HOURS:
+        wnd_exit()
     value = get_storage_percent()
     logging.info("storage reached %s%%", value)
     if value < 95 and cnt.add_and_test(value):
@@ -426,21 +443,15 @@ def wnd_main_loop() -> None:
         with wnd_open_wirehouse():
             wnd_discharge_storage()
         wnd_undock()
-        for _ in range(99):
-            cnt.add_and_test(0)
+    logging.info("deploy mining task")
+    for _ in range(3):
+        if wnd_deploy_mining_tasks():
+            break
+        change_aspect()
     else:
-        logging.info("deploy mining task")
-        for _ in range(3):
-            if wnd_deploy_mining_tasks():
-                break
-            change_aspect()
-        else:
-            logging.warn("failed to deploy mining task, exit now")
-            wnd_dock()
-            with wnd_open_wirehouse():
-                wnd_discharge_storage()
-            sys.exit(0)
-        cnt.clear()
+        logging.warn("failed to deploy mining task, exit now")
+        wnd_exit()
+    cnt.clear()
 
 
 def main():

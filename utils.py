@@ -167,6 +167,11 @@ class Window():
     def click(self, x, y):
         pyautogui.leftClick(x, y)
 
+    def close(self):
+        pyautogui.leftClick(self.x2-3, self.y1-3)
+        sleep(1)
+        self.click(0.567, 0.515)
+
     @_absolute(0, 1, 0, 1)
     def drag_ease(self, x1, y1, x2, y2, dur=1, ease=pyautogui.easeInQuad):
         dist = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
