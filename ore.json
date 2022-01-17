@@ -1,0 +1,98 @@
+[
+    {
+        "id": 1,
+        "name": "凡晶石",
+        "volume": 0.10,
+        "market_price": 8
+    },
+    {
+        "id": 2,
+        "name": "灼烧岩",
+        "volume": 0.15,
+        "market_price": 14
+    },
+    {
+        "id": 3,
+        "name": "干焦岩",
+        "volume": 1.5,
+        "market_price": 170
+    },
+    {
+        "id": 4,
+        "name": "斜长岩",
+        "volume": 0.35,
+        "market_price": 18
+    },
+    {
+        "id": 5,
+        "name": "奥贝尔石",
+        "volume": 0.60,
+        "market_price": 30
+    },
+    {
+        "id": 6,
+        "name": "水硼砂",
+        "volume": 1.20,
+        "market_price": 65
+    },
+    {
+        "id": 7,
+        "name": "杰斯贝矿",
+        "volume": 4.00,
+        "market_price": 1900
+    },
+    {
+        "id": 8,
+        "name": "希莫非特",
+        "volume": 3.00,
+        "market_price": 1000
+    },
+    {
+        "id": 9,
+        "name": "同位原矿",
+        "volume": 3.00,
+        "market_price": 700
+    },
+    {
+        "id": 10,
+        "name": "灰岩",
+        "volume": 3.20,
+        "market_price": 750
+    },
+    {
+        "id": 11,
+        "name": "黑赭石",
+        "volume": 1.60,
+        "market_price": 160
+    },
+    {
+        "id": 12,
+        "name": "片麻岩",
+        "volume": 2.00,
+        "market_price": 300
+    },
+    {
+        "id": 13,
+        "name": "克洛基石",
+        "volume": 6.40,
+        "market_price": 2500
+    },
+    {
+        "id": 14,
+        "name": "双多特石",
+        "volume": 6.40,
+        "market_price": 3000
+    },
+    {
+        "id": 15,
+        "name": "艾克诺岩",
+        "volume": 6.40,
+        "market_price": 2400
+    },
+    {
+        "id": 16,
+        "name": "基腹断岩",
+        "volume": 8.00,
+        "market_price": 1000
+    }
+]
