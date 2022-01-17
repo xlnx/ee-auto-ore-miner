@@ -11,7 +11,6 @@ class Panel():
     def get_navigate_speed(self) -> float:
         img = self.screenshot(
             (688, self.height - 55, 910, self.height - 29))
-        img.save('speed.png')
         speed = ocr(img, numbers=True)
         logging.debug('speed %s', speed)
         unit = 1

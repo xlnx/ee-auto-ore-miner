@@ -13,6 +13,7 @@
         "type": "overview",
         "dock_time_sec": 300
     },
+    "max_time_hr": 12,
     "devices": {
         "miners": [
             [
@@ -37,10 +38,6 @@
                 4,
                 0
             ]
-        ],
-        "thruster": [
-            0,
-            1
         ],
         "type": "strip"
     }

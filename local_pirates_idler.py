@@ -3,7 +3,7 @@ from window import Window
 
 
 class LocalPiratesIdler(Idler):
-    def check(self, window: Window) -> None:
+    def idle(self, window: Window) -> None:
         pass
         # window.open(config.overview.pirates)
         # targets = window.list_fast(1)

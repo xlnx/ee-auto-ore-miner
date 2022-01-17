@@ -15,7 +15,6 @@ import cv2
 import numpy as np
 import logging
 import random
-from typing import List
 
 
 """ constant defs """
@@ -72,7 +71,7 @@ def discharge_storage() -> None:
             img, CURRENT_SHIP_IND, cv2.TM_CCOEFF_NORMED)
         dy, dx = np.unravel_index(result.argmax(), result.shape)
         logging.info('(%d, %d)', dx, dy)
-        if dy + 300 < h:
+        if dx <= 15 and dy + 300 < h:
             break
         logging.debug('need swipe')
         window.swipe(180, 500, 180, 400, 1000)

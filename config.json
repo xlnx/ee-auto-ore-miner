@@ -13,6 +13,7 @@
         "type": "overview",
         "dock_time_sec": 300
     },
+    "max_time_hr": 12,
     "devices": {
         "miners": [
             [
@@ -22,19 +23,13 @@
             [
                 1,
                 0
-            ],
-            [
-                2,
-                0
-            ]
-        ],
-        "balls": [
-            [
-                5,
-                0
             ]
         ],
         "stabs": [
+            [
+                2,
+                0
+            ],
             [
                 3,
                 0
@@ -44,7 +39,6 @@
                 0
             ]
         ],
-        "type": "laser",
-        "interval": 48
+        "type": "strip"
     }
 }
