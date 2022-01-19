@@ -72,7 +72,7 @@ class Overview():
             self.activate(row, col)
         sleep(5000)
         while True:
-            if self.get_navigate_speed() < 10:
+            if self.get_navigate_speed() < 20:
                 break
         sleep(1000)
 

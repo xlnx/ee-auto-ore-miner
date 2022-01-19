@@ -13,7 +13,7 @@
         "type": "overview",
         "dock_time_sec": 300
     },
-    "max_time_hr": 12,
+    "max_time_hr": 16,
     "devices": {
         "miners": [
             [

@@ -95,6 +95,7 @@ class Panel():
                 sleep(4000)
                 break
         self.tap(self.width - 64, 506)
+        self.tap(self.width / 2, self.height - 180)
         sleep(2000)
 
     @contextmanager
