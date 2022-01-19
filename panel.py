@@ -2,10 +2,11 @@ import cv2
 import logging
 import numpy as np
 from contextlib import contextmanager
-from util import is_similar, ocr, parse_prefix_float, sleep, try_again
+from util import is_similar, now_sec, ocr, parse_prefix_float, sleep, try_again
 
 
 CURRENT_SHIP_IND = cv2.imread("current_ship.png")
+OVERVIEW_IND = cv2.imread("overview.png")
 
 
 class Panel():
@@ -79,9 +80,20 @@ class Panel():
         xs = [img.getpixel((self.width - x, y)) for x, y in pts]
         return all(is_similar(x, (174, 147, 40), 10) for x in xs)
 
+    def is_undocked(self) -> bool:
+        img = self.screenshot((800, 0, 1600, 900))
+        img = cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
+        result = cv2.matchTemplate(
+            img, OVERVIEW_IND, cv2.TM_CCOEFF_NORMED)
+        dy, dx = np.unravel_index(result.argmax(), result.shape)
+        return dx > 700 and dy > 450 and dy < 500
+
     def undock(self) -> None:
         self.tap(self.width - 108, 300)
-        sleep(1000 * 30)
+        while True:
+            if self.is_undocked():
+                sleep(4000)
+                break
         self.tap(self.width - 64, 506)
         sleep(2000)
 
