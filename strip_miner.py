@@ -17,7 +17,7 @@ class StripMiner(Miner):
         self._idler = idler
 
     def apply(self, ores: List[Tuple[float, Ore]]) -> MineState:
-        self._wnd.approach(0)
+        self._wnd.target_op(0, 1)
         if config.devices.contains('thruster'):
             row, col = config.devices.thruster
             self._wnd.activate(row, col)
@@ -27,7 +27,7 @@ class StripMiner(Miner):
             targets = self._wnd.list()
             if len(targets) == 0:
                 return MineState.Fail
-            di = targets[0].distance
+            di, _ = targets[0]
             logging.info('d = %f km', di)
             sleep(1000)
         for row, col in config.devices.miners:

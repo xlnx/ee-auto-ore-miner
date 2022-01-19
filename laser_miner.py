@@ -38,7 +38,7 @@ class LaserMiner(Miner):
         logging.info('optimal targets: %s', [ores[i] for i in targets])
         idx = targets[0]
         d, _ = ores[idx]
-        self._wnd.approach(0)
+        self._wnd.target_op(0, 1)
         if d <= MAX_MINER_RANGE:
             self._wnd.unlock_all()
             # for idx in targets:
@@ -54,7 +54,7 @@ class LaserMiner(Miner):
             targets = self._wnd.list()
             if len(targets) == 0:
                 return MineState.Fail
-            di = targets[0].distance
+            di, _ = targets[0]
             logging.info('d = %f km', di)
             sleep(1000)
         return MineState.Retry

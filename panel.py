@@ -1,6 +1,11 @@
+import cv2
 import logging
+import numpy as np
+from contextlib import contextmanager
 from util import is_similar, ocr, parse_prefix_float, sleep, try_again
-from window import Window
+
+
+CURRENT_SHIP_IND = cv2.imread("current_ship.png")
 
 
 class Panel():
@@ -11,7 +16,9 @@ class Panel():
     def get_navigate_speed(self) -> float:
         img = self.screenshot(
             (688, self.height - 55, 910, self.height - 29))
-        speed = ocr(img, numbers=True)
+        speed = ocr(img, cand_alphabet="0123456789.,/千米秒天文单位",
+                    single_line=True)
+        speed = speed.replace(',', '')
         logging.debug('speed %s', speed)
         unit = 1
         if '单位' in speed or '天' in speed:
@@ -29,7 +36,7 @@ class Panel():
     @try_again
     def get_storage_percent(self) -> float:
         img = self.screenshot((40, 130, 118, 155))
-        perc = ocr(img, True)
+        perc = ocr(img, cand_alphabet="0123456789.%", single_line=True)
         logging.debug('storage %s', perc)
         if perc[-1] != '%':
             raise NotImplementedError()
@@ -74,6 +81,48 @@ class Panel():
 
     def undock(self) -> None:
         self.tap(self.width - 108, 300)
-        sleep(1000 * 20)
+        sleep(1000 * 30)
         self.tap(self.width - 64, 506)
         sleep(2000)
+
+    @contextmanager
+    def open_wirehouse(self) -> None:
+        logging.debug('open wirehouse')
+        self.tap(10, 10)
+        sleep(1000)
+        self.tap(420, 420)
+        sleep(3000)
+        yield
+        self.tap(self.width - 60, 50)
+        sleep(3000)
+
+    def discharge_storage(self) -> None:
+        logging.debug('discharge storage')
+        x, y = 15, 100
+        w, h = 315, 700
+        while True:
+            img = self.screenshot((x, y, x + w, y + h))
+            img = cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
+            result = cv2.matchTemplate(
+                img, CURRENT_SHIP_IND, cv2.TM_CCOEFF_NORMED)
+            dy, dx = np.unravel_index(result.argmax(), result.shape)
+            logging.info('(%d, %d)', dx, dy)
+            if dx <= 15 and dy + 300 < h:
+                break
+            y1, y2 = 200, 50
+            logging.info('need swipe: %d -> %d', y1, y2)
+            self.swipe(180, y1, 180, y2, 1000)
+            sleep(2000)
+        logging.debug('detected current ship: (%d, %d)', x, y)
+        x, y = x + dx + 288, y + dy + 100
+        self.tap(x, y)
+        self.tap(x, y)
+        self.tap(x - 140, y + 60)
+        sleep(2000)
+        self.tap(self.width - 370, self.height - 80)
+        sleep(2000)
+        self.tap(190, 190)
+        sleep(2000)
+        self.tap(500, 200)
+        sleep(2000)
+        logging.info('storage discharged')

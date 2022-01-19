@@ -8,11 +8,8 @@ from ore import Ore
 from overview_pirates_idler import OverviewPiratesIdler
 from strip_miner import StripMiner
 from config import config
-from util import now_sec, ocr, sleep, parse_prefix_float
-from contextlib import contextmanager
+from util import now_sec, sleep
 import sys
-import cv2
-import numpy as np
 import logging
 import random
 
@@ -22,8 +19,6 @@ TARGET_LIST_REFRESH_DY = 0.5
 MAX_LOCK_TARGETS = 5
 MAX_MINER_RANGE = 19
 MAX_MINING_HOURS = 12
-
-CURRENT_SHIP_IND = cv2.imread("current_ship.png")
 
 
 window = GameWindow()
@@ -47,54 +42,31 @@ elif config.devices.type == "strip":
 else:
     raise NotImplementedError()
 
-
-@contextmanager
-def open_wirehouse() -> None:
-    logging.debug('open wirehouse')
-    window.tap(10, 10)
-    sleep(1000)
-    window.tap(420, 420)
-    sleep(3000)
-    yield
-    window.tap(window.width - 60, 50)
-    sleep(3000)
-
-
-def discharge_storage() -> None:
-    logging.debug('discharge storage')
-    x, y = 15, 100
-    w, h = 315, 700
-    while True:
-        img = window.screenshot((x, y, x + w, y + h))
-        img = cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
-        result = cv2.matchTemplate(
-            img, CURRENT_SHIP_IND, cv2.TM_CCOEFF_NORMED)
-        dy, dx = np.unravel_index(result.argmax(), result.shape)
-        logging.info('(%d, %d)', dx, dy)
-        if dx <= 15 and dy + 300 < h:
-            break
-        logging.debug('need swipe')
-        window.swipe(180, 500, 180, 400, 1000)
-        sleep(2000)
-    logging.debug('detected current ship: (%d, %d)', x, y)
-    x, y = x + dx + 288, y + dy + 100
-    window.tap(x, y)
-    window.tap(x, y)
-    window.tap(x - 140, y + 60)
-    sleep(2000)
-    window.tap(window.width - 370, window.height - 80)
-    sleep(2000)
-    window.tap(190, 190)
-    sleep(2000)
-    window.tap(500, 200)
-    sleep(2000)
-    logging.info('storage discharged')
+ORE_ALPHABET = "".join(set("".join([
+    "凡晶石",
+    "灼烧岩",
+    "干焦岩",
+    "斜长岩",
+    "奥贝尔石",
+    "水硼砂",
+    "杰斯贝矿",
+    "希莫非特",
+    "同位原矿",
+    "灰岩",
+    "黑赭石",
+    "片麻岩",
+    "克洛基石",
+    "双多特石",
+    "艾克诺岩",
+    "基腹断岩",
+    "小行星富[]"
+])))
 
 
 def abort() -> None:
     window.dock()
-    with open_wirehouse():
-        discharge_storage()
+    with window.open_wirehouse():
+        window.discharge_storage()
     # window.close()
     sys.exit(0)
 
@@ -103,9 +75,9 @@ def try_deploy_mining_task() -> None:
     logging.debug('try deploy mining task')
     while True:
         window.open(config.overview.ores)
-        targets = window.list()
-        logging.debug('targets: %s', targets)
-        ores = [(item.distance, Ore.from_text(item.label)) for item in targets]
+        targets = window.list(cand_alphabet=ORE_ALPHABET)
+        logging.info('targets: %s', targets)
+        ores = [(d, Ore.from_text(t)) for d, t in targets]
         logging.info('found ores: %s', ores)
         if len(ores) == 0 or all(_[1] == Ore.Unknown for _ in ores):
             return False
@@ -163,8 +135,8 @@ def main_loop(need_check: bool = True) -> None:
     if value > 90:
         logging.info("storage nearly full, deploy docking task")
         window.dock()
-        with open_wirehouse():
-            discharge_storage()
+        with window.open_wirehouse():
+            window.discharge_storage()
         window.undock()
         need_check = False
     logging.info("deploy mining task")
@@ -189,7 +161,7 @@ def main():
         force=True
     )
 
-    print("init success")
+    logging.info("init success")
     try:
         need_check = True
         if window.is_docked():
@@ -201,4 +173,3 @@ def main():
     except Exception as e:
         print(e)
         abort()
-    # discharge_storage()
