@@ -89,6 +89,7 @@ class Panel():
         return dx > 700 and dy > 450 and dy < 500
 
     def undock(self) -> None:
+        logging.info('undock')
         self.tap(self.width - 108, 300)
         while True:
             if self.is_undocked():
@@ -97,6 +98,7 @@ class Panel():
         self.tap(self.width - 64, 506)
         self.tap(self.width / 2, self.height - 180)
         sleep(2000)
+        logging.info('undocked')
 
     @contextmanager
     def open_wirehouse(self) -> None:
@@ -122,9 +124,9 @@ class Panel():
             logging.info('(%d, %d)', dx, dy)
             if dx <= 15 and dy + 300 < h:
                 break
-            y1, y2 = 200, 50
+            y1, y2 = 200, 100
             logging.info('need swipe: %d -> %d', y1, y2)
-            self.swipe(180, y1, 180, y2, 1000)
+            self.swipe(180, y1, 180, y2, 1500)
             sleep(2000)
         logging.debug('detected current ship: (%d, %d)', x, y)
         x, y = x + dx + 288, y + dy + 100

@@ -18,7 +18,7 @@ import random
 TARGET_LIST_REFRESH_DY = 0.5
 MAX_LOCK_TARGETS = 5
 MAX_MINER_RANGE = 19
-MAX_MINING_HOURS = 12
+# MAX_MINING_HOURS = 12
 
 
 window = GameWindow()
@@ -112,13 +112,15 @@ prev_t = 0
 
 def main_loop(need_check: bool = True) -> None:
     t = now_sec() - start_time
-    if t / 3600 >= MAX_MINING_HOURS:
+    if t / 3600 >= config.max_time_hr:
         abort()
     if need_check:
         logging.debug("miner.idle()")
-        miner.idle()
+        if miner.idle():
+            need_check = False
     global prev_t
     dt = t - prev_t
+    value = 0
     if dt >= 10:
         prev_t = t
         value = window.get_storage_percent()
@@ -129,7 +131,7 @@ def main_loop(need_check: bool = True) -> None:
                 return
             logging.info(
                 "ore mining task stopped with storage = %f%%", value)
-    else:
+    elif need_check:
         return
 
     if value > 90:

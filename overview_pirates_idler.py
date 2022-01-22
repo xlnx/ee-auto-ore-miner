@@ -14,3 +14,5 @@ class OverviewPiratesIdler(Idler):
                 window.discharge_storage()
             sleep(1000 * config.idler.get("dock_time_sec", 60 * 3))
             window.undock()
+            return True
+        return False

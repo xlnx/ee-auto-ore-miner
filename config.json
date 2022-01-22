@@ -1,6 +1,6 @@
 {
     "server": {
-        "host": "127.0.0.1",
+        "host": "localhost",
         "port": 5555
     },
     "overview": {
@@ -13,7 +13,7 @@
         "type": "overview",
         "dock_time_sec": 300
     },
-    "max_time_hr": 16,
+    "max_time_hr": 18,
     "devices": {
         "miners": [
             [
@@ -25,12 +25,7 @@
                 0
             ]
         ],
-        "balls": [
-            [
-                4,
-                0
-            ]
-        ],
+        "balls": [],
         "stabs": [
             [
                 2,
@@ -38,6 +33,10 @@
             ],
             [
                 3,
+                0
+            ],
+            [
+                4,
                 0
             ]
         ],

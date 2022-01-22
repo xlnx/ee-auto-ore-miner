@@ -37,11 +37,15 @@ class Overview():
             if ti == '' and di == '':
                 break
             # unit = DistanceUnit.Unknown
-            unit = 149597870.7
-            if '千' in ui or '米' in ui:
-                unit = 1
-            di = parse_prefix_float(di)
-            li.append((di * unit, ti))
+            try:
+                di = parse_prefix_float(di)
+                unit = 149597870.7
+                if '千' in ui or '米' in ui:
+                    unit = 1
+                di = di * unit
+            except Exception:
+                di = float('inf')
+            li.append((di, ti))
         logging.debug('overview.list %s', li)
         return li
 
@@ -108,14 +112,17 @@ class Overview():
             self.tap(
                 self.width - 68 - row * 101,
                 self.height - 72 - col * 105, 0)
+        sleep(3000)
         for row, col in config.devices.get("stabs", []):
             self.tap(
                 self.width - 68 - row * 101,
                 self.height - 72 - col * 105, 0)
         logging.debug('overview.target_op %d, %d', idx, 0)
         y = 67 + ITEM_HEIGHT * idx
-        self.tap(1300, y + 50, 0)
-        self.tap(1000, y + 95 * 0 + 50, 0)
+        for _ in range(3):
+            self.tap(1300, y + 50, 0)
+            self.tap(1000, y + 95 * 0 + 50, 0)
+            sleep(100)
         while not self.is_docked():
             sleep(300)
         logging.info('overview.fast_docked %d', idx)
