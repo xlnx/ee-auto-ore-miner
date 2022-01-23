@@ -1,7 +1,13 @@
 import json
+import sys
 from typing import Any
 
-with open('config.json', encoding='utf-8') as f:
+if len(sys.argv) > 1:
+    fname = sys.argv[1]
+else:
+    fname = 'config.json'
+print(fname)
+with open(fname, encoding='utf-8') as f:
     _CONFIG = json.load(f)
 
 

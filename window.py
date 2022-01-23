@@ -1,20 +1,26 @@
 import io
+import logging
+from typing import Tuple
 from config import config
 from adbutils import adb
 from PIL import Image
 from util import sleep
 
-
-adb.connect(config.server.host + ":" + str(config.server.port))
+DEVICE_ADDR = config.server.host + ":" + str(config.server.port)
+adb.connect(DEVICE_ADDR)
 
 ACTION_INTERVAL_MS = 300
 
 
 class Window():
     def __init__(self) -> None:
-        self._adb = adb.devices()[0]
-        self._y, self._x = self._adb.window_size()
-        assert (self._x, self._y) == (1600, 900)
+        self._adb = adb.device(serial=DEVICE_ADDR)
+        x, y = self._adb.window_size()
+        if x < y:
+            x, y = y, x
+        logging.info("device [%s] resolution: %dx%d", DEVICE_ADDR, x, y)
+        self._x, self._y = x, y
+        # self.screenshot().save('img.png')
 
     @property
     def width(self) -> int:
@@ -23,6 +29,19 @@ class Window():
     @property
     def height(self) -> int:
         return self._y
+
+    def x(self, x: int) -> int:
+        x1 = round(self._x * float(x) / 1600)
+        x1 = max(0, min(self._x, x1))
+        return x1
+
+    def y(self, y: int) -> int:
+        y1 = round(self._y * float(y) / 900)
+        y1 = max(0, min(self._y, y1))
+        return y1
+
+    def p(self, x: int, y: int) -> Tuple[int, int]:
+        return self.x(x), self.y(y)
 
     def screenshot(self, rect=None) -> Image:
         cmd = "screencap -p"

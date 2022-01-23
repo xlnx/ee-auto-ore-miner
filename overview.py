@@ -11,28 +11,40 @@ class Overview():
     def __init__(self) -> None:
         self._curr = -1
 
-    def open(self, idx: int) -> None:
+    @property
+    def item_height(self) -> int:
+        return self.y(86)
+
+    # ok
+    def open(self, idx: int, fast: bool = False) -> None:
         if self._curr != idx:
             logging.debug('overview.open %d', idx)
-            self.tap(1300, 30)
-            self.tap(1300, 160 + (ITEM_HEIGHT + 2) * idx)
-            sleep(1000)
+            x = self.width - self.y(300)
+            self.tap(x, self.y(30))
+            self.tap(x, self.y(160) + self.item_height * idx)
+            if not fast:
+                sleep(1000)
             self._curr = idx
 
+    # ok
     @try_again
     def list(self, max_items: int = 5, cand_alphabet: Optional[str] = None) -> List[Tuple[float, str]]:
         logging.debug('overview.list %d', max_items)
-        img = self.screenshot((1211, 67, 1522, 537))
+        x1 = self.width - self.y(389)
+        x2 = self.width - self.y(78)
+        y1 = self.y(67)
+        y2 = self.y(537)
+        img = self.screenshot((x1, y1, x2, y2))
         li = []
         for i in range(0, max_items):
-            di = img.crop((36, ITEM_HEIGHT * i,
-                           105, ITEM_HEIGHT * i + 52))
+            di = img.crop((self.y(36), self.item_height * i,
+                           self.y(105), self.item_height * i + 52))
             di = ocr(di, cand_alphabet="0123456789.", single_line=True)
-            ui = img.crop((36, ITEM_HEIGHT * i + 50,
-                           105, ITEM_HEIGHT * (i + 1)))
+            ui = img.crop((self.y(36), self.item_height * i + 50,
+                           self.y(105), self.item_height * (i + 1)))
             ui = ocr(ui, cand_alphabet="千米天文单位", single_line=True)
-            ti = img.crop((108, ITEM_HEIGHT * i,
-                           300, ITEM_HEIGHT * (i + 1)))
+            ti = img.crop((self.y(108), self.item_height * i,
+                           self.y(300), self.item_height * (i + 1)))
             ti = ocr(ti, cand_alphabet=cand_alphabet)
             if ti == '' and di == '':
                 break
@@ -49,14 +61,19 @@ class Overview():
         logging.debug('overview.list %s', li)
         return li
 
+    # ok
     @try_again
     def list_fast(self, max_items: int = 1, cand_alphabet: Optional[str] = None) -> List[str]:
         logging.debug('overview.list_fast %d', max_items)
-        img = self.screenshot((1211, 67, 1522, 537))
+        x1 = self.width - self.y(389)
+        x2 = self.width - self.y(78)
+        y1 = self.y(67)
+        y2 = self.y(537)
+        img = self.screenshot((x1, y1, x2, y2))
         li = []
         for i in range(0, max_items):
-            ti = img.crop((108, ITEM_HEIGHT * i,
-                           300, ITEM_HEIGHT * (i + 1)))
+            ti = img.crop((self.y(108), self.item_height * i,
+                           self.y(300), self.item_height * (i + 1)))
             ti = ocr(ti, cand_alphabet=cand_alphabet)
             if ti == '':
                 break
@@ -64,12 +81,15 @@ class Overview():
         logging.debug('overview.list_fast %s', li)
         return li
 
+    # ok
     def target_op(self, idx: int, op_idx: int, dt: int = 300) -> None:
         logging.debug('overview.target_op %d, %d', idx, op_idx)
-        y = 67 + ITEM_HEIGHT * idx
-        self.tap(1300, y + 50)
-        self.tap(1000, y + 95 * op_idx + 50, dt)
+        y = self.y(67) + self.item_height * idx
+        self.tap(self.width - self.y(300), y + self.y(50))
+        self.tap(self.width - self.y(600), y +
+                 self.y(95) * op_idx + self.y(50), dt)
 
+    # ok
     def warp(self, idx: int) -> None:
         self.target_op(idx, 1, 20)
         for row, col in config.devices.get("balls", []):
@@ -80,11 +100,13 @@ class Overview():
                 break
         sleep(1000)
 
+    # ok
     def lock(self, idx: int, dt: int = 1000) -> None:
         logging.debug('overview.lock %d', idx)
         self.target_op(idx, 0)
         sleep(dt)
 
+    # ok
     def dock(self, idx: int = 0) -> None:
         logging.info('overview.dock %d', idx)
         self.open(config.overview.stations)
@@ -97,31 +119,19 @@ class Overview():
             sleep(300)
         logging.info('overview.docked %d', idx)
 
+    # ok
     def fast_dock(self, idx: int = 0) -> None:
         logging.info('overview.fast_dock %d', idx)
-        s_idx = config.overview.stations
-        if self._curr != s_idx:
-            logging.debug('overview.open %d', s_idx)
-            self.tap(1300, 30, 0)
-            self.tap(1300, 160 + (ITEM_HEIGHT + 2) * s_idx, 0)
-            self._curr = s_idx
-        y = 67 + ITEM_HEIGHT * idx
-        self.tap(1300, y + 50, 0)
-        self.tap(1000, y + 95 * 1 + 50, 0)
+        self.open(config.overview.stations, fast=True)
+        self.target_op(idx, 1, 20)
         for row, col in config.devices.get("balls", []):
-            self.tap(
-                self.width - 68 - row * 101,
-                self.height - 72 - col * 105, 0)
+            self.activate(row, col, 0)
         sleep(3000)
         for row, col in config.devices.get("stabs", []):
-            self.tap(
-                self.width - 68 - row * 101,
-                self.height - 72 - col * 105, 0)
+            self.activate(row, col, 0)
         logging.debug('overview.target_op %d, %d', idx, 0)
-        y = 67 + ITEM_HEIGHT * idx
         for _ in range(3):
-            self.tap(1300, y + 50, 0)
-            self.tap(1000, y + 95 * 0 + 50, 0)
+            self.target_op(idx, 0, 20)
             sleep(100)
         while not self.is_docked():
             sleep(300)

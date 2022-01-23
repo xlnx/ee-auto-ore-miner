@@ -14,6 +14,17 @@ import logging
 import random
 
 
+file_handler = logging.FileHandler(filename='tmp.log', encoding='utf-8')
+stdout_handler = logging.StreamHandler(sys.stdout)
+handlers = [file_handler, stdout_handler]
+logging.basicConfig(
+    level=logging.INFO,
+    format=u'[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
+    handlers=handlers,
+    force=True
+)
+
+
 """ constant defs """
 TARGET_LIST_REFRESH_DY = 0.5
 MAX_LOCK_TARGETS = 5
@@ -153,16 +164,6 @@ def main_loop(need_check: bool = True) -> None:
 
 
 def main():
-    file_handler = logging.FileHandler(filename='tmp.log', encoding='utf-8')
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    handlers = [file_handler, stdout_handler]
-    logging.basicConfig(
-        level=logging.INFO,
-        format=u'[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s',
-        handlers=handlers,
-        force=True
-    )
-
     logging.info("init success")
     try:
         need_check = True
