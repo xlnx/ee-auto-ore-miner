@@ -116,7 +116,7 @@ class Panel():
     def open_wirehouse(self) -> None:
         logging.debug('open wirehouse')
         self.tap(10, 10)
-        sleep(1000)
+        sleep(5000)
         self.tap(self.y(420), self.y(420))
         sleep(3000)
         yield
