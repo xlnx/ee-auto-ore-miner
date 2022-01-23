@@ -5,6 +5,7 @@ from config import config
 from adbutils import adb
 from PIL import Image
 from util import sleep
+from admin import Admin
 
 DEVICE_ADDR = config.server.host + ":" + str(config.server.port)
 adb.connect(DEVICE_ADDR)
@@ -20,7 +21,12 @@ class Window():
             x, y = y, x
         logging.info("device [%s] resolution: %dx%d", DEVICE_ADDR, x, y)
         self._x, self._y = x, y
+        self._admin = Admin()
         # self.screenshot().save('img.png')
+
+    @property
+    def admin(self) -> Admin:
+        return self._admin
 
     @property
     def width(self) -> int:

@@ -8,10 +8,11 @@ from ore import Ore
 from overview_pirates_idler import OverviewPiratesIdler
 from strip_miner import StripMiner
 from config import config
-from util import now_sec, sleep
+from util import now_sec
 import sys
 import logging
 import random
+import atexit
 
 
 file_handler = logging.FileHandler(filename='tmp.log', encoding='utf-8')
@@ -33,6 +34,7 @@ MAX_MINER_RANGE = 19
 
 
 window = GameWindow()
+atexit.register(lambda: window.admin.disconnect())
 cnt = StorageCounter(6)
 
 start_time = now_sec()
@@ -76,8 +78,7 @@ ORE_ALPHABET = "".join(set("".join([
 
 def abort() -> None:
     window.dock()
-    with window.open_wirehouse():
-        window.discharge_storage()
+    window.discharge_storage()
     # window.close()
     sys.exit(0)
 
@@ -94,6 +95,7 @@ def try_deploy_mining_task() -> None:
             return False
         state = miner.apply(ores)
         if state == MineState.Success:
+            window.admin.emit('update_status', 'mining')
             return True
         elif state == MineState.Fail:
             return False
@@ -104,6 +106,7 @@ def try_deploy_mining_task() -> None:
 
 
 def deploy_mining_task(check: bool = True) -> None:
+    window.admin.emit('update_status', 'deploying')
     if check:
         if try_deploy_mining_task():
             return True
@@ -127,6 +130,7 @@ def main_loop(need_check: bool = True) -> None:
         abort()
     if need_check:
         logging.debug("miner.idle()")
+        window.admin.heartbeat()
         if miner.idle():
             need_check = False
     global prev_t
@@ -135,10 +139,11 @@ def main_loop(need_check: bool = True) -> None:
     if dt >= 10:
         prev_t = t
         value = window.get_storage_percent()
+        window.admin.emit('update_storage', value)
         logging.info("storage reached %s%%", value)
         if need_check:
             if value < 95 and cnt.add_and_test(value):
-                # window.open(config.overview.ores)
+                window.admin.emit('update_status', 'mining')
                 return
             logging.info(
                 "ore mining task stopped with storage = %f%%", value)
@@ -148,8 +153,7 @@ def main_loop(need_check: bool = True) -> None:
     if value > 90:
         logging.info("storage nearly full, deploy docking task")
         window.dock()
-        with window.open_wirehouse():
-            window.discharge_storage()
+        window.discharge_storage()
         window.undock()
         need_check = False
     logging.info("deploy mining task")
@@ -168,8 +172,11 @@ def main():
     try:
         need_check = True
         if window.is_docked():
+            window.admin.emit('update_status', 'docked')
             window.undock()
             need_check = False
+        else:
+            window.admin.emit('update_status', 'undocked')
         while True:
             main_loop(need_check)
             need_check = True

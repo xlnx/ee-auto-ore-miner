@@ -108,6 +108,7 @@ class Overview():
 
     # ok
     def dock(self, idx: int = 0) -> None:
+        self.admin.emit('update_status', 'docking')
         logging.info('overview.dock %d', idx)
         self.open(config.overview.stations)
         self.target_op(idx, 0, 20)
@@ -118,9 +119,11 @@ class Overview():
         while not self.is_docked():
             sleep(300)
         logging.info('overview.docked %d', idx)
+        self.admin.emit('update_status', 'docked')
 
     # ok
     def fast_dock(self, idx: int = 0) -> None:
+        self.admin.emit('update_status', 'docking')
         logging.info('overview.fast_dock %d', idx)
         self.open(config.overview.stations, fast=True)
         self.target_op(idx, 1, 20)
@@ -136,3 +139,4 @@ class Overview():
         while not self.is_docked():
             sleep(300)
         logging.info('overview.fast_docked %d', idx)
+        self.admin.emit('update_status', 'docked')

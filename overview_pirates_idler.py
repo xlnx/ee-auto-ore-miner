@@ -10,8 +10,7 @@ class OverviewPiratesIdler(Idler):
         targets = window.list_fast(1)
         if len(targets) > 0:
             window.fast_dock()
-            with window.open_wirehouse():
-                window.discharge_storage()
+            window.discharge_storage()
             sleep(1000 * config.idler.get("dock_time_sec", 60 * 3))
             window.undock()
             return True

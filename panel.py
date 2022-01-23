@@ -100,6 +100,7 @@ class Panel():
 
     # ok
     def undock(self) -> None:
+        self.admin.emit('update_status', 'undocking')
         logging.info('undock')
         self.tap(self.width - self.y(108), self.y(300))
         while True:
@@ -110,21 +111,16 @@ class Panel():
         # self.tap(self.width / 2, self.height - 180)
         sleep(2000)
         logging.info('undocked')
+        self.admin.emit('update_status', 'undocked')
 
     # ok
-    @contextmanager
-    def open_wirehouse(self) -> None:
+    def discharge_storage(self) -> None:
+        self.admin.emit('update_status', 'discharging')
         logging.debug('open wirehouse')
         self.tap(10, 10)
         sleep(5000)
         self.tap(self.y(420), self.y(420))
         sleep(3000)
-        yield
-        self.tap(self.width - self.y(60), self.y(50))
-        sleep(3000)
-
-    # ok
-    def discharge_storage(self) -> None:
         logging.debug('discharge storage')
         x, y = self.y(15), self.y(100)
         w, h = self.y(315), self.y(700)
@@ -168,3 +164,7 @@ class Panel():
         self.tap(self.y(500), self.y(200))
         sleep(2000)
         logging.info('storage discharged')
+        self.tap(self.width - self.y(60), self.y(50))
+        sleep(3000)
+        self.admin.emit('update_status', 'docked')
+        self.admin.emit('update_storage', 0)
