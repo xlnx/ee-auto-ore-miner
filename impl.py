@@ -8,7 +8,7 @@ from ore import Ore
 from overview_pirates_idler import OverviewPiratesIdler
 from strip_miner import StripMiner
 from config import config
-from util import now_sec
+from util import now_sec, sleep
 import sys
 import logging
 import random
@@ -38,6 +38,7 @@ atexit.register(lambda: window.admin.disconnect())
 cnt = StorageCounter(6)
 
 start_time = now_sec()
+prev_t = 0
 
 idler: Idler
 if config.idler.type == "overview":
@@ -76,9 +77,13 @@ ORE_ALPHABET = "".join(set("".join([
 ])))
 
 
+online = 0
+
+
 def abort() -> None:
     window.dock()
     window.discharge_storage()
+    window.admin.disconnect()
     # window.close()
     sys.exit(0)
 
@@ -121,7 +126,21 @@ def deploy_mining_task(check: bool = True) -> None:
     return try_deploy_mining_task()
 
 
-prev_t = 0
+def apply_task(docked: bool, name: str, *args) -> bool:
+    logging.info('apply task: %s', name)
+    global online
+    if name == 'offline' and online:
+        if not docked:
+            window.dock()
+            window.discharge_storage()
+        online = 0
+        window.admin.emit('update_online', online)
+        return False
+    if name == 'online' and not online:
+        assert docked
+        online = 1
+        window.admin.emit('update_online', online)
+    return True
 
 
 def main_loop(need_check: bool = True) -> None:
@@ -129,8 +148,12 @@ def main_loop(need_check: bool = True) -> None:
     if t / 3600 >= config.max_time_hr:
         abort()
     if need_check:
-        logging.debug("miner.idle()")
         window.admin.heartbeat()
+        while len(window.admin.tasks):
+            name, args = window.admin.tasks.pop()
+            if not apply_task(False, name, *args):
+                return
+        logging.debug("miner.idle()")
         if miner.idle():
             need_check = False
     global prev_t
@@ -157,7 +180,7 @@ def main_loop(need_check: bool = True) -> None:
         window.undock()
         need_check = False
     logging.info("deploy mining task")
-    for _ in range(3):
+    for _ in range(5):
         if deploy_mining_task(need_check):
             break
         # change_aspect()
@@ -170,16 +193,31 @@ def main_loop(need_check: bool = True) -> None:
 def main():
     logging.info("init success")
     try:
-        need_check = True
-        if window.is_docked():
-            window.admin.emit('update_status', 'docked')
-            window.undock()
-            need_check = False
-        else:
-            window.admin.emit('update_status', 'undocked')
+        global online
+        online = 1
+        window.admin.emit('update_online', online)
+        init = True
         while True:
-            main_loop(need_check)
-            need_check = True
+            if online:
+                need_check = True
+                if init:
+                    value = window.get_storage_percent()
+                    window.admin.emit('update_storage', value)
+                    if window.is_docked():
+                        window.admin.emit('update_status', 'docked')
+                        window.undock()
+                        need_check = False
+                    else:
+                        window.admin.emit('update_status', 'undocked')
+                    init = False
+                main_loop(need_check)
+            else:
+                window.admin.heartbeat()
+                while len(window.admin.tasks):
+                    name, args = window.admin.tasks.pop()
+                    apply_task(True, name, *args)
+                init = True
+            sleep(500)
     except Exception as e:
         print(e)
         abort()

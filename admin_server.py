@@ -105,6 +105,19 @@ async def update_status(sid, status):
     await broadcast_slave_info(sid)
     # print(slaves)
 
+
+@sio.event
+async def update_online(sid, online):
+    slaves[sid]['online'] = online
+    heartbeat_impl(sid)
+    await broadcast_slave_info(sid)
+
+
+@sio.event
+async def slave_task(sid, dst, *args):
+    assert sid in clients
+    await sio.emit('slave_task', *args, room=dst)
+
 # @sio.on('init')
 # async def init()
 

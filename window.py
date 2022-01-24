@@ -21,7 +21,7 @@ class Window():
             x, y = y, x
         logging.info("device [%s] resolution: %dx%d", DEVICE_ADDR, x, y)
         self._x, self._y = x, y
-        self._admin = Admin()
+        self._admin = Admin(self._adb)
         # self.screenshot().save('img.png')
 
     @property

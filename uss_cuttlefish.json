@@ -14,6 +14,7 @@
         "dock_time_sec": 300
     },
     "max_time_hr": 240,
+    "warp_prepare_sec": 11.11,
     "devices": {
         "miners": [
             [

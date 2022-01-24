@@ -8,6 +8,6 @@ class LocalPiratesIdler(Idler):
         # window.open(config.overview.pirates)
         # targets = window.list_fast(1)
         # if len(targets) > 0:
-        #     window.fast_dock()
+        #     window.dock()
         #     sleep(1000 * 60 * 3)
         #     window.undock()

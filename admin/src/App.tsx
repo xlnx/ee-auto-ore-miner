@@ -3,7 +3,9 @@ import './App.css';
 import { Slave } from './Slave';
 import { io } from "socket.io-client";
 import { SlaveState } from './types';
-import { Grid } from '@mui/material';
+import { AppBar, Grid, IconButton, Toolbar, Typography } from '@mui/material';
+import { Box } from '@mui/system';
+import MenuIcon from '@mui/icons-material/Menu';
 
 type Props = {}
 
@@ -39,13 +41,35 @@ class App extends React.Component<Props, States> {
     }
     let doms = slaves.map(slave => (
       <Grid item xs={12}>
-        <Slave value={slave}></Slave>
+        <Slave value={slave} socket={this.socket}></Slave>
       </Grid>
     ))
     return (
-      <Grid container spacing={3}>
-        {doms}
-      </Grid>
+      <Box>
+        <AppBar position="static">
+          <Toolbar>
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="open drawer"
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}
+            >
+              Admin
+            </Typography></Toolbar>
+        </AppBar>
+        <Grid container spacing={3}>
+          {doms}
+        </Grid>
+      </Box>
     )
   }
 }

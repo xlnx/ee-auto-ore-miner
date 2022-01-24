@@ -110,33 +110,22 @@ class Overview():
     def dock(self, idx: int = 0) -> None:
         self.admin.emit('update_status', 'docking')
         logging.info('overview.dock %d', idx)
-        self.open(config.overview.stations)
-        self.target_op(idx, 0, 20)
-        for row, col in config.devices.get("balls", []):
-            self.activate(row, col)
-        for row, col in config.devices.get("stabs", []):
-            self.activate(row, col)
-        while not self.is_docked():
-            sleep(300)
-        logging.info('overview.docked %d', idx)
-        self.admin.emit('update_status', 'docked')
-
-    # ok
-    def fast_dock(self, idx: int = 0) -> None:
-        self.admin.emit('update_status', 'docking')
-        logging.info('overview.fast_dock %d', idx)
+        warp_time = int(1000 * config.get('warp_prepare_sec', 10))
         self.open(config.overview.stations, fast=True)
         self.target_op(idx, 1, 20)
         for row, col in config.devices.get("balls", []):
             self.activate(row, col, 0)
-        sleep(3000)
+        sleep(warp_time - 1000)
         for row, col in config.devices.get("stabs", []):
             self.activate(row, col, 0)
+        sleep(1000)
         logging.debug('overview.target_op %d, %d', idx, 0)
         for _ in range(3):
             self.target_op(idx, 0, 20)
             sleep(100)
         while not self.is_docked():
-            sleep(300)
-        logging.info('overview.fast_docked %d', idx)
+            # logging.info("speed: %d", self.get_navigate_speed())
+            # self.get_storage_percent()
+            sleep(100)
+        logging.info('overview.docked %d', idx)
         self.admin.emit('update_status', 'docked')

@@ -21,15 +21,7 @@ class StripMiner(Miner):
         if config.devices.contains('thruster'):
             row, col = config.devices.thruster
             self._wnd.activate(row, col)
-            # self._wnd.activate(row, col)
-        di = 9999
-        while di >= MAX_MINER_RANGE:
-            targets = self._wnd.list()
-            if len(targets) == 0:
-                return MineState.Fail
-            di, _ = targets[0]
-            logging.info('d = %f km', di)
-            sleep(1000)
+            self._wnd.activate(row, col)
         for row, col in config.devices.miners:
             self._wnd.activate(row, col)
         return MineState.Success
