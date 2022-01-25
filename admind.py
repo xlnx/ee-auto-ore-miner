@@ -33,7 +33,9 @@ sio = socketio.AsyncServer()
 app = web.Application()
 sio.attach(app)
 aiohttp_session.setup(app, aiohttp_session.SimpleCookieStorage())
-authorized_tokens = set()
+authorized_tokens = set(
+    'SA0USrTuEyQ2U1dOp-eDBA'
+)
 
 
 async def index(request):
