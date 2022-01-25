@@ -6,6 +6,7 @@ import socketio
 import json
 import time
 import aiohttp_session
+from http.cookies import SimpleCookie
 
 file_handler = logging.FileHandler(filename='admin.log', encoding='utf-8')
 stdout_handler = logging.StreamHandler(sys.stdout)
@@ -33,20 +34,26 @@ sio = socketio.AsyncServer()
 app = web.Application()
 sio.attach(app)
 aiohttp_session.setup(app, aiohttp_session.SimpleCookieStorage())
-authorized_tokens = set(
-    'SA0USrTuEyQ2U1dOp-eDBA'
-)
+
+with open('authorized_tokens.json', encoding='utf-8') as f:
+    _TOKENS = json.load(f)
+authorized_tokens = set(_TOKENS)
 
 
 async def index(request):
-    session = await aiohttp_session.get_session(request)
-    token = session.get("token")
+    cookie_str = request.headers.get('Cookie', '')
+    cookie = SimpleCookie()
+    cookie.load(cookie_str)
+    token = None
+    if 'token' in cookie:
+        token = cookie['token'].value
     if token not in authorized_tokens:
-        raise web.HTTPSeeOther(location="/login")
+        raise web.HTTPSeeOther(location="/login.html")
     with open(STATIC_PATH + 'index.html') as f:
         return web.Response(text=f.read(), content_type='text/html')
 
 app.router.add_route('*', '/', index)
+app.router.add_route('*', '/index.html', index)
 app.router.add_static('/', path=STATIC_PATH)
 
 
