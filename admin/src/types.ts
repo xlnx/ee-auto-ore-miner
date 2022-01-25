@@ -4,8 +4,8 @@ export type SlaveState = {
     host: string,
     port: number,
     product: {
-      model: string,
       manufacturer: string,
+      model: string,
       abi: string,
     },
     soc: {

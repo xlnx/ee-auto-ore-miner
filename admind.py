@@ -1,9 +1,11 @@
 import logging
 import sys
+from typing import Awaitable, Callable
 from aiohttp import web
 import socketio
 import json
 import time
+import aiohttp_session
 
 file_handler = logging.FileHandler(filename='admin.log', encoding='utf-8')
 stdout_handler = logging.StreamHandler(sys.stdout)
@@ -30,10 +32,15 @@ STATIC_PATH = './admin/build/'
 sio = socketio.AsyncServer()
 app = web.Application()
 sio.attach(app)
+aiohttp_session.setup(app, aiohttp_session.SimpleCookieStorage())
+authorized_tokens = set()
 
 
 async def index(request):
-    """Serve the client-side application."""
+    session = await aiohttp_session.get_session(request)
+    token = session.get("token")
+    if token not in authorized_tokens:
+        raise web.HTTPSeeOther(location="/login")
     with open(STATIC_PATH + 'index.html') as f:
         return web.Response(text=f.read(), content_type='text/html')
 
