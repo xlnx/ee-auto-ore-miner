@@ -16,9 +16,7 @@ class Panel():
     def __init__(self) -> None:
         pass
 
-    # ok
-    @try_again
-    def get_navigate_speed(self) -> float:
+    def try_get_navigate_speed(self) -> float:
         x_2 = self.width / 2
         dx = self.y(110)
         img = self.screenshot(
@@ -42,17 +40,28 @@ class Panel():
 
     # ok
     @try_again
-    def get_storage_percent(self) -> float:
+    def get_navigate_speed(self) -> float:
+        return self.try_get_navigate_speed()
+
+    def try_get_storage_percent(self) -> float:
         img = self.screenshot(
             (self.y(40), self.y(130), self.y(118), self.y(155)))
         perc = ocr(img, cand_alphabet="0123456789.%", single_line=True)
         logging.debug('storage %s', perc)
-        if perc[-1] != '%':
+        x, y = 420, 145
+        if len(perc) == 0 or perc[-1] != '%':
+            self.tap(self.y(x), self.y(y))
             raise NotImplementedError()
         val = parse_prefix_float(perc)
         if val > 100:
+            self.tap(self.y(x), self.y(y))
             raise NotImplementedError()
         return val
+
+    # ok
+    @try_again
+    def get_storage_percent(self) -> float:
+        return self.try_get_storage_percent()
 
     def unlock_all(self) -> None:
         logging.debug('unlock all')
@@ -136,9 +145,9 @@ class Panel():
                     found = True
                     break
             if not found:
-                y1, y2 = self.y(200), self.y(100)
+                y1, y2 = self.y(180), self.y(80)
                 logging.info('need swipe: %d -> %d', y1, y2)
-                self.swipe(180, y1, 180, y2, 1000)
+                self.swipe(180, y1, 180, y2, 500)
         logging.debug('detected current ship: (%d, %d)', x, y)
         x1, y1 = x + dx + self.y(288), y + dy + self.y(100)
         self.tap(x1, y1)

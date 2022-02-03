@@ -118,7 +118,7 @@ class Overview():
         sleep(warp_time - 1000)
         for row, col in config.devices.get("stabs", []):
             self.activate(row, col, 0)
-        sleep(1000)
+        sleep(500)
         logging.debug('overview.target_op %d, %d', idx, 0)
         for _ in range(3):
             self.target_op(idx, 0, 20)

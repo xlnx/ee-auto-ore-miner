@@ -66,6 +66,26 @@ export class Slave extends React.Component<Props> {
         variant: "outlined"
       }
     }
+    const chips = [
+      (
+        <Grid item>
+          <Chip label={label} color={color} variant="outlined" />
+        </Grid>
+      ),
+    ]
+    if (!this.props.value.dead) {
+      chips.push((
+        <Grid item>
+          <Chip label={online.label} color={online.color} variant={online.variant} onClick={this.toggle} />
+        </Grid>
+      ))
+    } else {
+      chips.push((
+        <Grid item>
+          <Chip label="abnormal" color="error" variant="filled" />
+        </Grid>
+      ))
+    }
     return (
       <Box m={2} p={2}>
         <Card>
@@ -80,12 +100,7 @@ export class Slave extends React.Component<Props> {
           />
           <CardContent>
             <Grid container spacing={1}>
-              <Grid item>
-                <Chip label={label} color={color} variant="outlined" />
-              </Grid>
-              <Grid item>
-                <Chip label={online.label} color={online.color} variant={online.variant} onClick={this.toggle}></Chip>
-              </Grid>
+              {chips}
             </Grid>
             <Box pt={2}>
               <BorderLinearProgress

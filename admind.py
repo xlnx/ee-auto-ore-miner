@@ -1,11 +1,11 @@
 import logging
 import sys
-from typing import Awaitable, Callable
 from aiohttp import web
 import socketio
 import json
 import time
 import aiohttp_session
+import asyncio
 from http.cookies import SimpleCookie
 
 file_handler = logging.FileHandler(filename='admin.log', encoding='utf-8')
@@ -63,6 +63,7 @@ slaves = {}
 
 def heartbeat_impl(sid):
     slaves[sid]['heartbeat'] = time.time()
+    slaves[sid]['dead'] = 0
 
 
 async def broadcast_slave_info(sid):
@@ -134,43 +135,31 @@ async def slave_task(sid, dst, *args):
     assert sid in clients
     await sio.emit('slave_task', *args, room=dst)
 
-# @sio.on('init')
-# async def init()
+
+async def interval_5_sec():
+    while True:
+        t1 = time.time()
+        for sid, slave in slaves.items():
+            if 'heartbeat' in slave:
+                t0 = slave['heartbeat']
+                if t1 - t0 > 120:
+                    slave['dead'] = 1
+                    await broadcast_slave_info(sid)
+        await asyncio.sleep(5)
 
 
-# class AdminServer():
-#     def __init__(self) -> None:
-#         sio.connect(f'http://{HOST}:{PORT}')
+async def main():
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, port=PORT)
+    await site.start()
 
-#     def heartbeat(self) -> None:
-#         pass
+    task = interval_5_sec()
+    asyncio.get_event_loop().create_task(task)
 
-#     def update_storage(self, perc: int) -> None:
-#         self.heartbeat()
+    await asyncio.Event().wait()
 
 
 if __name__ == "__main__":
-    web.run_app(app, port=PORT)
-    # static_files = {
-    #     '/': './admin/build/',
-    # }
-    # sio = socketio.Server()
-    # app = socketio.WSGIApp(sio, static_files=static_files)
-
-    # import eventlet
-    # eventlet.wsgi.server(eventlet.listen(('', PORT)), app)
-    # admin = AdminServer()
-
-    # from http.server import HTTPServer, SimpleHTTPRequestHandler
-
-    # class Handler(SimpleHTTPRequestHandler):
-    #     def __init__(self, *args, **kwargs) -> None:
-    #         super().__init__(*args, **kwargs, directory='./admin/build')
-
-    #     def log_message(self, fmt, *args) -> None:
-    #         pass
-
-    # httpd = HTTPServer(('localhost', PORT), Handler)
-
-    # print(f'serving at port: {PORT}')
-    # httpd.serve_forever()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())

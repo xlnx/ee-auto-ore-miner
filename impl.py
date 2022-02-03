@@ -1,6 +1,6 @@
 from counter import StorageCounter
 from game_window import GameWindow
-from idler import Idler
+from idler import IdleState, Idler
 from laser_miner import LaserMiner
 from local_pirates_idler import LocalPiratesIdler
 from miner import MineState, Miner
@@ -81,8 +81,9 @@ online = 0
 
 
 def abort() -> None:
-    window.dock()
-    window.discharge_storage()
+    if not window.is_docked():
+        window.dock()
+        window.discharge_storage()
     window.admin.disconnect()
     # window.close()
     sys.exit(0)
@@ -154,8 +155,11 @@ def main_loop(need_check: bool = True) -> None:
             if not apply_task(False, name, *args):
                 return
         logging.debug("miner.idle()")
-        if miner.idle():
+        state = miner.idle()
+        if state == IdleState.Deploy:
             need_check = False
+        elif state == IdleState.Nothing:
+            pass
     global prev_t
     dt = t - prev_t
     value = 0
