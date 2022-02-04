@@ -16,6 +16,13 @@ class Panel():
     def __init__(self) -> None:
         pass
 
+    def get_system_name(self) -> str:
+        img = self.screenshot(
+            (self.y(175), self.y(30), self.y(258), self.y(52)))
+        system = ocr(img, cand_alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-",
+                     single_line=True)
+        return system
+
     def try_get_navigate_speed(self) -> float:
         x_2 = self.width / 2
         dx = self.y(110)
@@ -173,7 +180,7 @@ class Panel():
         self.tap(self.y(500), self.y(200))
         sleep(2000)
         logging.info('storage discharged')
-        self.tap(self.width - self.y(60), self.y(50))
+        self.tap(self.width - self.y(50), self.y(40))
         sleep(3000)
         self.admin.emit('update_status', 'docked')
         self.admin.emit('update_storage', 0)

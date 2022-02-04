@@ -73,6 +73,15 @@ export class Slave extends React.Component<Props> {
         </Grid>
       ),
     ]
+    if (this.props.value.local) {
+      const [x, y, z] = this.props.value.local
+      const color = (x + y) ? "warning" : "success"
+      chips.push((
+        <Grid item>
+          <Chip label={`${x}/${y}/${z}`} color={color} variant="outlined" />
+        </Grid>
+      ))
+    }
     if (!this.props.value.dead) {
       chips.push((
         <Grid item>
@@ -86,31 +95,36 @@ export class Slave extends React.Component<Props> {
         </Grid>
       ))
     }
+    let title = `${this.props.value.device.product.manufacturer} ${this.props.value.device.product.model}`
+    if (this.props.value.system) {
+      title += ` - ${this.props.value.system}`
+    }
+    const subheader = `${this.props.value.device.host}:${this.props.value.device.port}`
     return (
-      <Box m={2} p={2}>
-        <Card>
-          <CardHeader
-            title={`${this.props.value.device.host}:${this.props.value.device.port}`}
-            subheader={`${this.props.value.device.product.manufacturer} ${this.props.value.device.product.model}`}
-            action={
-              <IconButton aria-label="settings">
-                <MoreVertIcon />
-              </IconButton>
-            }
-          />
-          <CardContent>
-            <Grid container spacing={1}>
-              {chips}
-            </Grid>
-            <Box pt={2}>
-              <BorderLinearProgress
-                variant="determinate"
-                value={Math.min(100, Math.max(0, this.props.value.storage ?? 0))}
-              />
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
+      // <Box m={2} p={2}>
+      <Card>
+        <CardHeader
+          title={title}
+          subheader={subheader}
+          action={
+            <IconButton aria-label="settings">
+              <MoreVertIcon />
+            </IconButton>
+          }
+        />
+        <CardContent>
+          <Grid container spacing={1}>
+            {chips}
+          </Grid>
+          <Box pt={2}>
+            <BorderLinearProgress
+              variant="determinate"
+              value={Math.min(100, Math.max(0, this.props.value.storage ?? 0))}
+            />
+          </Box>
+        </CardContent>
+      </Card>
+      // </Box>
     )
   }
 

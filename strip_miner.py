@@ -29,18 +29,18 @@ class StripMiner(Miner):
             self._wnd.activate(row, col)
         return MineState.Success
 
-    def idle(self) -> IdleState:
-        t = now_sec() - start_time
-        global prev_t
-        dt = t - prev_t
-        if dt >= 40:
-            prev_t = t
-            self._wnd.open(config.overview.ores)
-            targets = self._wnd.list_fast(5)
-            cnt = len(targets)
-            if cnt > 0:
-                self._wnd.target_op(cnt - 1, 1)
-            else:
-                return IdleState.Deploy
-        else:
-            return self._idler.idle(self._wnd)
+    def idle(self, docked: bool) -> IdleState:
+        if not docked:
+            t = now_sec() - start_time
+            global prev_t
+            dt = t - prev_t
+            if dt >= 40:
+                prev_t = t
+                self._wnd.open(config.overview.ores)
+                targets = self._wnd.list_fast(3)
+                cnt = len(targets)
+                if cnt > 0:
+                    self._wnd.target_op(0, 1)
+                else:
+                    return IdleState.Deploy
+        return self._idler.idle(self._wnd, docked=docked)

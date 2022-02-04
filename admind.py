@@ -116,6 +116,22 @@ async def update_storage(sid, value):
 
 
 @sio.event
+async def update_system(sid, system):
+    slaves[sid]['system'] = system
+    heartbeat_impl(sid)
+    await broadcast_slave_info(sid)
+    # print(slaves)
+
+
+@sio.event
+async def update_local(sid, x, y, z):
+    slaves[sid]['local'] = [x, y, z]
+    heartbeat_impl(sid)
+    await broadcast_slave_info(sid)
+    # print(slaves)
+
+
+@sio.event
 async def update_status(sid, status):
     slaves[sid]['status'] = status
     heartbeat_impl(sid)

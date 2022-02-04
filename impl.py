@@ -11,6 +11,7 @@ from config import config
 from util import now_sec, sleep
 import sys
 import logging
+import traceback
 import random
 import atexit
 
@@ -155,7 +156,7 @@ def main_loop(need_check: bool = True) -> None:
             if not apply_task(False, name, *args):
                 return
         logging.debug("miner.idle()")
-        state = miner.idle()
+        state = miner.idle(docked=False)
         if state == IdleState.Deploy:
             need_check = False
         elif state == IdleState.Nothing:
@@ -181,6 +182,8 @@ def main_loop(need_check: bool = True) -> None:
         logging.info("storage nearly full, deploy docking task")
         window.dock()
         window.discharge_storage()
+        logging.debug("miner.idle()")
+        miner.idle(docked=True)
         window.undock()
         need_check = False
     logging.info("deploy mining task")
@@ -195,8 +198,10 @@ def main_loop(need_check: bool = True) -> None:
 
 
 def main():
-    logging.info("init success")
     try:
+        system = window.get_system_name()
+        window.admin.emit('update_system', system)
+        logging.info("init success: %s", system)
         global online
         online = 1
         window.admin.emit('update_online', online)
@@ -222,6 +227,6 @@ def main():
                     apply_task(True, name, *args)
                 init = True
             sleep(500)
-    except Exception as e:
-        print(e)
+    except Exception:
+        print(traceback.format_exc())
         abort()

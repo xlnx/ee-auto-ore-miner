@@ -15,8 +15,10 @@ export type SlaveState = {
   },
   online: number,
   dead: number,
-  storage: number,
   status: ('docked' | 'discharging' | 'undocking' |
     'undocked' | 'deploying' | 'mining' | 'docking' | 'unknown'),
   heartbeat: number,
+  local: number[],
+  system: string,
+  storage: number,
 }

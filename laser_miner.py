@@ -59,5 +59,5 @@ class LaserMiner(Miner):
             sleep(1000)
         return MineState.Retry
 
-    def idle(self) -> None:
-        self._idler.idle(self._wnd)
+    def idle(self, docked: bool) -> None:
+        self._idler.idle(self._wnd, docked=docked)

@@ -14,5 +14,5 @@ class Miner():
     def apply(self, ores: List[Tuple[float, Ore]]) -> MineState:
         pass
 
-    def idle(self) -> None:
+    def idle(self, docked: bool) -> None:
         pass

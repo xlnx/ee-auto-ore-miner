@@ -8,5 +8,5 @@ class IdleState(Enum):
 
 
 class Idler():
-    def idle(self, window: GameWindow) -> IdleState:
+    def idle(self, window: GameWindow, docked: bool) -> IdleState:
         return IdleState.Nothing

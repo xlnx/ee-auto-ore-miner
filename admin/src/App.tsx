@@ -40,7 +40,7 @@ class App extends React.Component<Props, States> {
       }
     }
     let doms = slaves.map(slave => (
-      <Grid item xs={12}>
+      <Grid item xs={12} sm={6} md={4}>
         <Slave value={slave} socket={this.socket}></Slave>
       </Grid>
     ))
@@ -66,9 +66,11 @@ class App extends React.Component<Props, States> {
               Admin
             </Typography></Toolbar>
         </AppBar>
-        <Grid container spacing={3}>
-          {doms}
-        </Grid>
+        <Box p={3}>
+          <Grid container spacing={3}>
+            {doms}
+          </Grid>
+        </Box>
       </Box>
     )
   }
