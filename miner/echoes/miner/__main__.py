@@ -2,7 +2,7 @@ import sys
 import yaml
 import logging
 import argparse
-from .miner.config import config
+from .config import config
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--config', required=True, action='store',
@@ -27,5 +27,5 @@ with open(args.config, 'r', encoding='utf-8') as f:
 config.load(_CONFIG)
 
 if __name__ == "__main__":
-    from .miner.impl import main
+    from .impl import main
     main()

@@ -1,1 +1,1 @@
-recursive-include ee-admind/build *
+recursive-include echoes/admind/build *

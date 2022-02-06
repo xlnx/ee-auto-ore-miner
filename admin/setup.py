@@ -28,9 +28,9 @@ class BuildPyCommand(build_py):
 
 
 setup(
-    name='ee-admind',
+    name='echoes-admind',
     version='1.0.1',
-    packages=['ee-admind'],
+    packages=['echoes', 'echoes.admind'],
     include_package_data=True,
     cmdclass={
         'build_py': BuildPyCommand,

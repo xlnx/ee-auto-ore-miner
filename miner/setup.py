@@ -1,9 +1,9 @@
 from setuptools import setup
 
 setup(
-    name='ee-miner',
+    name='echoes-miner',
     version='1.0.1',
-    packages=['ee-miner', 'ee-miner.client', 'ee-miner.miner'],
+    packages=['echoes', 'echoes.miner', 'echoes.client'],
     include_package_data=True,
     install_requires=[
         'PyYAML>=6.0',

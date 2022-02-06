@@ -1,2 +1,2 @@
-recursive-include ee-miner/client/static *
-recursive-include ee-miner/miner/static *
+recursive-include echoes/client/static *
+recursive-include echoes/miner/static *
