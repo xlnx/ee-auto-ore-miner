@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='ee-admind',
-    version='0.1.16',
+    version='1.0.0',
     packages=['ee-admind'],
     include_package_data=True,
     install_requires=[
