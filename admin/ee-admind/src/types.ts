@@ -1,4 +1,4 @@
-export type SlaveState = {
+export interface SlaveState {
   sid: string,
   device: {
     id: string,
@@ -13,12 +13,19 @@ export type SlaveState = {
       model: string,
     }
   },
-  online: number,
-  dead: number,
-  status: ('docked' | 'discharging' | 'undocking' |
-    'undocked' | 'deploying' | 'mining' | 'docking' | 'unknown'),
+  type: string,
   heartbeat: number,
-  local: number[],
-  system: string,
-  storage: number,
+  dead: number,
+  state: {}
+}
+
+export interface MinerState extends SlaveState {
+  state: {
+    online: number,
+    status: ('docked' | 'discharging' | 'undocking' |
+      'undocked' | 'deploying' | 'mining' | 'docking' | 'unknown'),
+    local: number[],
+    system: string,
+    storage: number,
+  }
 }

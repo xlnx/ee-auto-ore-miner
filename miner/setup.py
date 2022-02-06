@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='ee-miner',
-    version='1.0.0',
+    version='1.0.1',
     packages=['ee-miner', 'ee-miner.client', 'ee-miner.miner'],
     include_package_data=True,
     install_requires=[

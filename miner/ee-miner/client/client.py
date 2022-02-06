@@ -15,7 +15,7 @@ OVERVIEW_IND = cv2.imread(get_static("overview.png"))
 class AdbClient(Window):
     def __init__(self,
                  serial: str,
-                 role: str,
+                 role: str = 'Slave',
                  admin_addr: Optional[str] = None,
                  user_id: str = '<匿名>') -> None:
         Window.__init__(self, serial=serial)
@@ -132,7 +132,7 @@ class AdbClient(Window):
 
     # ok
     def undock(self) -> None:
-        self.admin.emit('update_status', 'undocking')
+        self.admin.emit('update', 'status', 'undocking')
         logging.info('undock')
         self.tap(self.width - self.y(108), self.y(300))
         while True:
@@ -143,4 +143,4 @@ class AdbClient(Window):
         # self.tap(self.width / 2, self.height - 180)
         sleep(2000)
         logging.info('undocked')
-        self.admin.emit('update_status', 'undocked')
+        self.admin.emit('update', 'status', 'undocked')

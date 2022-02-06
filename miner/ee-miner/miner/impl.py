@@ -24,7 +24,6 @@ MAX_MINER_RANGE = 19
 
 
 window = Client(serial=f'{config.adb.host}:{config.adb.port}',
-                role='slave',
                 admin_addr=f'{config.admin.host}:{config.admin.port}',
                 user_id=config.get('id', ''))
 cnt = StorageCounter(6)
@@ -93,7 +92,7 @@ def try_deploy_mining_task() -> None:
             return False
         state = miner.apply(ores)
         if state == MineState.Success:
-            window.admin.emit('update_status', 'mining')
+            window.admin.emit('update', 'status', 'mining')
             return True
         elif state == MineState.Fail:
             return False
@@ -104,7 +103,7 @@ def try_deploy_mining_task() -> None:
 
 
 def deploy_mining_task(check: bool = True) -> None:
-    window.admin.emit('update_status', 'deploying')
+    window.admin.emit('update', 'status', 'deploying')
     if check:
         if try_deploy_mining_task():
             return True
@@ -127,12 +126,12 @@ def apply_task(docked: bool, name: str, *args) -> bool:
             window.dock()
             window.discharge_storage()
         online = 0
-        window.admin.emit('update_online', online)
+        window.admin.emit('update', 'online', online)
         return False
     if name == 'online' and not online:
         assert docked
         online = 1
-        window.admin.emit('update_online', online)
+        window.admin.emit('update', 'online', online)
     return True
 
 
@@ -158,11 +157,11 @@ def main_loop(need_check: bool = True) -> None:
     if dt >= 10:
         prev_t = t
         value = window.get_storage_percent()
-        window.admin.emit('update_storage', value)
+        window.admin.emit('update', 'storage', value)
         logging.info("storage reached %s%%", value)
         if need_check:
             if value < 95 and cnt.add_and_test(value):
-                window.admin.emit('update_status', 'mining')
+                window.admin.emit('update', 'status', 'mining')
                 return
             logging.info(
                 "ore mining task stopped with storage = %f%%", value)
@@ -192,24 +191,24 @@ def main():
     try:
         window.local.calibrate()
         system = window.get_system_name()
-        window.admin.emit('update_system', system)
+        window.admin.emit('update', 'system', system)
         logging.info("init success: %s", system)
         global online
         online = 1
-        window.admin.emit('update_online', online)
+        window.admin.emit('update', 'online', online)
         init = True
         while True:
             if online:
                 need_check = True
                 if init:
                     value = window.get_storage_percent()
-                    window.admin.emit('update_storage', value)
+                    window.admin.emit('update', 'storage', value)
                     if window.is_docked():
-                        window.admin.emit('update_status', 'docked')
+                        window.admin.emit('update', 'status', 'docked')
                         window.undock()
                         need_check = False
                     else:
-                        window.admin.emit('update_status', 'undocked')
+                        window.admin.emit('update', 'status', 'undocked')
                     init = False
                 main_loop(need_check)
             else:

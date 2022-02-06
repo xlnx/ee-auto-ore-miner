@@ -20,7 +20,7 @@ class OverviewPiratesIdler(Idler):
                     emergency = 1
         if not emergency:
             x, y, z = window.local.count()
-            window.admin.emit('update_local', (x, y, z))
+            window.admin.emit('update_local', x, y, z)
             th = config.get('max_local_rivals', 0)
             if x + y > th:
                 logging.warn('emergency.local: %s > %d', [x, y, z], th)
@@ -28,7 +28,7 @@ class OverviewPiratesIdler(Idler):
         if emergency:
             def idle() -> Tuple[int, int, int]:
                 xs = window.local.count()
-                window.admin.emit('update_local', xs)
+                window.admin.emit('update_local', *xs)
                 window.admin.heartbeat()
                 sleep(1000)
                 return xs

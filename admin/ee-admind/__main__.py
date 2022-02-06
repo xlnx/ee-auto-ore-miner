@@ -1,6 +1,8 @@
 import logging
 import threading
+import traceback
 import sys
+from typing import Dict, Iterable, Type, TypeVar
 from aiohttp import web
 import socketio
 import time
@@ -70,6 +72,35 @@ app.router.add_route('*', '/', index)
 app.router.add_route('*', '/index.html', index)
 app.router.add_static('/', path=STATIC_PATH)
 
+T = TypeVar('T')
+
+
+class Entity():
+
+    pool: Dict[str, 'Entity'] = {}
+
+    @staticmethod
+    def filter(role: Type[T]) -> Iterable[T]:
+        for _, ent in Entity.pool.items():
+            if isinstance(ent, role):
+                yield ent
+
+    @property
+    def sid(self) -> str:
+        return self._sid
+
+    def __init__(self, sid: str) -> None:
+        self._sid = sid
+
+    async def connect(self, *args) -> None:
+        assert self.sid not in Entity.pool
+        Entity.pool[self.sid] = self
+        logger.info(f'{type(self).__name__} connected: {self.sid}')
+
+    async def disconnect(self) -> None:
+        logger.info(f'{type(self).__name__} disconnected: {self.sid}')
+        del Entity.pool[self.sid]
+
 
 clients = set()
 slaves = {}
@@ -78,138 +109,136 @@ systems = {}
 mutex = threading.Lock()
 
 
-def heartbeat_impl(sid):
-    slaves[sid]['heartbeat'] = time.time()
-    slaves[sid]['dead'] = 0
-
-
-async def broadcast_slave_info(sid):
-    logger.debug(f'broadcast slave {sid}')
-    for client in clients:
-        await sio.emit('update_slave', {sid: slaves[sid]}, room=client)
-
-
-@sio.event
-async def client_init(sid):
-    logger.info(f'client connected: {sid}')
-    await sio.emit('update_slave', slaves, room=sid)
-    clients.add(sid)
-
-
-@sio.event
-async def slave_init(sid, device):
-    assert sid not in slaves
-    logger.info(f'slave connected: {sid}')
-    slaves[sid] = {'device': device, 'sid': sid}
-    heartbeat_impl(sid)
-    await broadcast_slave_info(sid)
-    # print(slaves)
-
-
 @sio.event
 async def disconnect(sid):
-    if sid in slaves:
-        logger.info(f'slave disconnected: {sid}')
-        for client in clients:
-            await sio.emit('remove_slave', sid, room=client)
-        del slaves[sid]
-    elif sid in clients:
-        logger.info(f'client disconnected: {sid}')
-        clients.remove(sid)
-    # print(f'disconnected: {sid}')
+    if sid in Entity.pool:
+        await Entity.pool[sid].disconnect()
 
 
 @sio.event
-async def heartbeat(sid):
-    heartbeat_impl(sid)
+async def dispatch(sid, evt: str, *args):
+    if sid not in Entity.pool:
+        if evt == 'init':
+            role, *args = args
+            cls = globals().get(role, None)
+            if cls is None:
+                logging.warning(f'role {role} not found')
+                return
+            await cls(sid).connect(*args)
+        else:
+            logging.warning(f'invalid event: {evt}')
+    else:
+        obj = Entity.pool[sid]
+        fn = getattr(obj, evt, None)
+        if fn is not None:
+            try:
+                await fn(*args)
+            except Exception as e:
+                print(traceback.format_exc())
+                logging.warning(f'call {type(obj).__name__}.{evt} failed')
+        else:
+            logging.warning(f'{type(obj).__name__} has no event: {evt}')
 
 
-@sio.event
-async def update_storage(sid, value):
-    slaves[sid]['storage'] = value
-    heartbeat_impl(sid)
-    await broadcast_slave_info(sid)
-    # print(slaves)
+""" CLIENTS """
 
 
-@sio.event
-async def update_system(sid, system):
-    slaves[sid]['system'] = system
-    heartbeat_impl(sid)
-    await broadcast_slave_info(sid)
-    # print(slaves)
+class Client(Entity):
+    @staticmethod
+    async def broadcast(evt: str, *args) -> None:
+        logger.debug(f'broadcast {evt}')
+        for cl in Entity.filter(Client):
+            await sio.emit(evt, *args, room=cl.sid)
+
+    async def connect(self, *args) -> None:
+        await super().connect(*args)
+        slaves = {e.sid: e.data for e in Entity.filter(Slave)}
+        await sio.emit('update_slave', slaves, room=self.sid)
+
+    async def task(self, sid, *args):
+        assert sid in Entity.pool
+        await sio.emit('slave_task', *args, room=sid)
 
 
-@sio.event
-async def update_local(sid, x, y, z):
-    if 'system' in slaves[sid]:
-        s = slaves[sid]['system']
-        mutex.acquire()
-        system = systems.setdefault(s, {})
-        t = time.time()
-        t0 = system.setdefault('timestamp', t)
-        x0 = system.setdefault('x', x)
-        y0 = system.setdefault('y', y)
-        z0 = system.setdefault('z', z)
-        system['timestamp'] = t
-        system['x'] = x
-        system['y'] = y
-        system['z'] = z
-        mutex.release()
-        dt = round(t - t0)
-        dx = x - x0
-        dy = y - y0
-        if dx != 0 or dy != 0:
-            def f(dx):
-                return f'增加了{dx}' if dx > 0 else f'减少了{-dx}'
-            ms = []
-            if dx != 0:
-                ms.append(f'{f(dx)}红')
-            if dy != 0:
-                ms.append(f'{f(dy)}白')
-            ms = '，'.join(ms)
-            id = slaves[sid]['device'].get('id', '')
-            if not id:
-                id = '热心群众'
-            msg = f'【{s}】{x}红{y}白，总人数{z}，{dt}秒内{ms}\n--来自【{id}】'
-            await bot.prompt(msg)
+class Slave(Entity):
+    def __init__(self, sid: str) -> None:
+        super().__init__(sid)
+        self.state = {}
+        self.data = {'type': type(self).__name__, 'state': self.state}
 
-    slaves[sid]['local'] = [x, y, z]
-    heartbeat_impl(sid)
-    await broadcast_slave_info(sid)
-    # print(slaves)
+    async def connect(self, device, *args) -> None:
+        await super().connect(*args)
+        self.data['sid'] = self.sid
+        self.data['device'] = device
+        await self.heartbeat()
+        await self.sync()
+
+    async def heartbeat(self):
+        self.data['heartbeat'] = time.time()
+        self.data['dead'] = 0
+
+    async def disconnect(self) -> None:
+        for client in Entity.filter(Client):
+            await sio.emit('remove_slave', self.sid, room=client.sid)
+        await super().disconnect()
+
+    async def sync(self) -> None:
+        await Client.broadcast('update_slave', {self.sid: self.data})
 
 
-@sio.event
-async def update_status(sid, status):
-    slaves[sid]['status'] = status
-    heartbeat_impl(sid)
-    await broadcast_slave_info(sid)
-    # print(slaves)
+class Miner(Slave):
+    async def update(self, key, value):
+        self.state[key] = value
+        await self.heartbeat()
+        await self.sync()
 
+    async def update_local(self, x, y, z):
+        if 'system' in self.state:
+            s = self.state['system']
+            mutex.acquire()
+            system = systems.setdefault(s, {})
+            t = time.time()
+            t0 = system.setdefault('timestamp', t)
+            x0 = system.setdefault('x', x)
+            y0 = system.setdefault('y', y)
+            z0 = system.setdefault('z', z)
+            system['timestamp'] = t
+            system['x'] = x
+            system['y'] = y
+            system['z'] = z
+            mutex.release()
+            dt = round(t - t0)
+            dx = x - x0
+            dy = y - y0
+            if dx != 0 or dy != 0:
+                def f(dx):
+                    return f'增加了{dx}' if dx > 0 else f'减少了{-dx}'
+                ms = []
+                if dx != 0:
+                    ms.append(f'{f(dx)}红')
+                if dy != 0:
+                    ms.append(f'{f(dy)}白')
+                ms = '，'.join(ms)
+                id = self.data['device'].get('id', '')
+                if not id:
+                    id = '热心群众'
+                msg = f'【{s}】{x}红{y}白，总人数{z}，{dt}秒内{ms}\n--来自【{id}】'
+                await bot.prompt(msg)
 
-@sio.event
-async def update_online(sid, online):
-    slaves[sid]['online'] = online
-    heartbeat_impl(sid)
-    await broadcast_slave_info(sid)
-
-
-@sio.event
-async def slave_task(sid, dst, *args):
-    assert sid in clients
-    await sio.emit('slave_task', *args, room=dst)
+        self.state['local'] = [x, y, z]
+        await self.heartbeat()
+        await self.sync()
 
 
 async def interval_5_sec():
     while True:
         t1 = time.time()
-        for sid, slave in slaves.items():
-            if 'heartbeat' in slave:
-                t0 = slave['heartbeat']
+        for slave in Entity.filter(Slave):
+            if 'heartbeat' in slave.data:
+                t0 = slave.data['heartbeat']
                 if t1 - t0 > 120:
-                    slave['dead'] = 1
-                    await broadcast_slave_info(sid)
+                    slave.data['dead'] = 1
+                    await slave.sync()
         await asyncio.sleep(5)
 
 

@@ -2,10 +2,11 @@ import React from 'react';
 import './App.css';
 import { Slave } from './Slave';
 import { io } from "socket.io-client";
-import { SlaveState } from './types';
+import { SlaveState, MinerState } from './types';
 import { AppBar, Grid, IconButton, Toolbar, Typography } from '@mui/material';
 import { Box } from '@mui/system';
 import MenuIcon from '@mui/icons-material/Menu';
+import { Miner } from './Miner';
 
 type Props = {}
 
@@ -20,7 +21,7 @@ class App extends React.Component<Props, States> {
   constructor(props: {}) {
     super(props)
     console.log('ctor()')
-    this.socket.emit('client_init')
+    this.socket.emit('dispatch', 'init', 'Client')
     this.socket.on('update_slave', (states: States) => {
       console.log('update_slave', states)
       this.setState(states)
@@ -39,11 +40,23 @@ class App extends React.Component<Props, States> {
         slaves.push(slave)
       }
     }
-    let doms = slaves.map(slave => (
-      <Grid item xs={12} sm={12} md={6}>
-        <Slave value={slave} socket={this.socket}></Slave>
-      </Grid>
-    ))
+    let doms = slaves.map(slave => {
+      let dom = (<></>)
+      switch (slave.type) {
+        case 'Miner':
+          dom = <Miner value={slave as MinerState} socket={this.socket}></Miner>;
+          break;
+        case 'Slave':
+        default:
+          dom = <Slave value={slave} socket={this.socket}></Slave>;
+          break;
+      }
+      return (
+        <Grid item xs={12} sm={12} md={6}>
+          {dom}
+        </Grid>
+      )
+    })
     return (
       <Box>
         <AppBar position="static">

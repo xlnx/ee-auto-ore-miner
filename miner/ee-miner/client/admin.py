@@ -33,8 +33,7 @@ class Admin():
                 'model': window.shell('getprop ro.soc.model'),
             }
         }
-        print(role)
-        self.emit('slave_init', server)
+        self.emit('init', role, server)
 
         def slave_task(name, *args):
             self._queue.append((name, args))
@@ -44,19 +43,15 @@ class Admin():
     def tasks(self) -> Deque[Tuple[str, Any]]:
         return self._queue
 
-    def emit(self, event: str, data: Any):
+    def emit(self, event: str, *args):
         if self._sio is not None:
             try:
-                self._sio.emit(event, data)
+                self._sio.emit('dispatch', (event, *args))
             except Exception:
                 pass
 
     def heartbeat(self):
-        if self._sio is not None:
-            try:
-                self._sio.emit('heartbeat')
-            except Exception:
-                pass
+        self.emit('heartbeat')
 
     def disconnect(self):
         if self._sio is not None:
