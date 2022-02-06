@@ -2,8 +2,7 @@ export type SlaveState = {
   sid: string,
   device: {
     id: string,
-    host: string,
-    port: number,
+    serial: string,
     product: {
       manufacturer: string,
       model: string,

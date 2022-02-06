@@ -99,13 +99,12 @@ export class Slave extends React.Component<Props> {
     if (this.props.value.system) {
       title += ` - ${this.props.value.system}`
     }
-    const subheader = `${this.props.value.device.host}:${this.props.value.device.port}`
     return (
       // <Box m={2} p={2}>
       <Card>
         <CardHeader
           title={title}
-          subheader={subheader}
+          subheader={this.props.value.device.serial}
           action={
             <IconButton aria-label="settings">
               <MoreVertIcon />
