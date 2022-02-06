@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='echoes-miner',
-    version='1.0.1',
+    version='1.1.0',
     packages=['echoes', 'echoes.miner', 'echoes.client'],
     include_package_data=True,
     install_requires=[

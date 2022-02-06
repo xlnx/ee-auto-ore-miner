@@ -132,7 +132,7 @@ class AdbClient(Window):
 
     # ok
     def undock(self) -> None:
-        self.admin.emit('update', 'status', 'undocking')
+        self.admin.update('status', 'undocking')
         logging.info('undock')
         self.tap(self.width - self.y(108), self.y(300))
         while True:
@@ -143,4 +143,4 @@ class AdbClient(Window):
         # self.tap(self.width / 2, self.height - 180)
         sleep(2000)
         logging.info('undocked')
-        self.admin.emit('update', 'status', 'undocked')
+        self.admin.update('status', 'undocked')

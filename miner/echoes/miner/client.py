@@ -35,7 +35,7 @@ class Client(AdbClient):
 
     # ok
     def dock(self, idx: int = 0) -> None:
-        self.admin.emit('update', 'status', 'docking')
+        self.admin.update('status', 'docking')
         logging.info('overview.dock %d', idx)
         warp_time = int(1000 * config.get('warp_prepare_sec', 10))
         self.overview.open(config.overview.stations, fast=True)
@@ -55,11 +55,11 @@ class Client(AdbClient):
             # self.get_storage_percent()
             sleep(100)
         logging.info('overview.docked %d', idx)
-        self.admin.emit('update', 'status', 'docked')
+        self.admin.update('status', 'docked')
 
     # ok
     def discharge_storage(self) -> None:
-        self.admin.emit('update', 'status', 'discharging')
+        self.admin.update('status', 'discharging')
         logging.debug('open wirehouse')
         self.tap(10, 10)
         sleep(5000)
@@ -110,5 +110,5 @@ class Client(AdbClient):
         logging.info('storage discharged')
         self.tap(self.width - self.y(50), self.y(40))
         sleep(3000)
-        self.admin.emit('update', 'status', 'docked')
-        self.admin.emit('update', 'storage', 0)
+        self.admin.update('status', 'docked')
+        self.admin.update('storage', 0)

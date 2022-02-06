@@ -2,7 +2,7 @@ import logging
 import threading
 import traceback
 import sys
-from typing import Dict, Iterable, Type, TypeVar
+from typing import Any, Dict, Iterable, Type, TypeVar
 from aiohttp import web
 import socketio
 import time
@@ -163,13 +163,16 @@ class Client(Entity):
 class Slave(Entity):
     def __init__(self, sid: str) -> None:
         super().__init__(sid)
-        self.state = {}
-        self.data = {'type': type(self).__name__, 'state': self.state}
+        self.data = {'type': type(self).__name__}
 
-    async def connect(self, device, *args) -> None:
+    @property
+    def state(self) -> Dict[str, Any]:
+        return self.data['state']
+
+    async def connect(self, data, *args) -> None:
         await super().connect(*args)
+        self.data.update(data)
         self.data['sid'] = self.sid
-        self.data['device'] = device
         await self.heartbeat()
         await self.sync()
 

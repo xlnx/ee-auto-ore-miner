@@ -10,7 +10,7 @@ class BuildPyCommand(build_py):
 
     def run(self):
         cwd = pathlib.Path().absolute()
-        js = os.path.join(str(cwd), 'ee-admind')
+        js = os.path.join(str(cwd), 'echoes/admind')
         cmds = [
             'yarn install',
             'yarn run build',
@@ -29,7 +29,7 @@ class BuildPyCommand(build_py):
 
 setup(
     name='echoes-admind',
-    version='1.0.1',
+    version='1.1.0',
     packages=['echoes', 'echoes.admind'],
     include_package_data=True,
     cmdclass={
