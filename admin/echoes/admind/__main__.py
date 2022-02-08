@@ -36,19 +36,28 @@ logging.basicConfig(
 logger = logging.getLogger("admin")
 logger.setLevel(logging.INFO)
 
-with open(args.config, 'r', encoding='utf-8') as f:
-    _CONFIG = yaml.load(f.read(), Loader=yaml.FullLoader)
 
-HOST = _CONFIG['host']
-PORT = _CONFIG['port']
-TOKENS = set(_CONFIG['authorized_tokens'])
-host = _CONFIG['bot']['host']
-port = _CONFIG['bot']['port']
-group_ids = _CONFIG['bot']['group_ids']
-bot = Bot(host=host, port=port, group_ids=group_ids)
+def load_config():
+    with open(args.config, 'r', encoding='utf-8') as f:
+        conf = yaml.load(f.read(), Loader=yaml.FullLoader)
+    global PORT, TOKENS, BOT, WARN, EMERGENCY
+    PORT = conf.get('port', 5700)
+    TOKENS = set(conf['authorized_tokens'])
+    bot_conf = conf.get('bot', {})
+    host = bot_conf.get('host', None)
+    port = bot_conf.get('port', None)
+    group_ids = bot_conf.get('group_ids', [])
+    online_group_ids = bot_conf.get('online_group_ids', group_ids)
+    threshold_conf = bot_conf.get('threshold', {})
+    WARN = threshold_conf.get('warn', 3)
+    EMERGENCY = threshold_conf.get('emergency', 8)
+    BOT = Bot(host=host, port=port, group_ids=group_ids,
+              online_group_ids=online_group_ids)
 
 
 STATIC_PATH = os.path.join(dir_path, 'build/')
+
+load_config()
 
 sio = socketio.AsyncServer()
 app = web.Application()
@@ -108,6 +117,8 @@ systems = {}
 
 mutex = threading.Lock()
 
+prev_lvl = 0
+
 
 @sio.event
 async def disconnect(sid):
@@ -133,7 +144,7 @@ async def dispatch(sid, evt: str, *args):
         if fn is not None:
             try:
                 await fn(*args)
-            except Exception as e:
+            except Exception:
                 print(traceback.format_exc())
                 logging.warning(f'call {type(obj).__name__}.{evt} failed')
         else:
@@ -213,20 +224,34 @@ class Miner(Slave):
             dt = round(t - t0)
             dx = x - x0
             dy = y - y0
-            if dx != 0 or dy != 0:
-                def f(dx):
-                    return f'增加了{dx}' if dx > 0 else f'减少了{-dx}'
-                ms = []
-                if dx != 0:
-                    ms.append(f'{f(dx)}红')
-                if dy != 0:
-                    ms.append(f'{f(dy)}白')
-                ms = '，'.join(ms)
+            lvl = 0
+            n = 0
+            if x + y >= EMERGENCY:
+                n = EMERGENCY
+                lvl = 2
+            elif x + y >= WARN:
+                n = WARN
+                lvl = 1
+            global prev_lvl
+            enable = False
+            if lvl != prev_lvl:
+                enable = lvl > prev_lvl
+                prev_lvl = lvl
+            if (dx != 0 or dy != 0) and enable:
+                # def f(dx):
+                #     return f'增加了{dx}' if dx > 0 else f'减少了{-dx}'
+                # ms = []
+                # if dx != 0:
+                #     ms.append(f'{f(dx)}红')
+                # if dy != 0:
+                #     ms.append(f'{f(dy)}白')
+                # ms = '，'.join(ms)
                 id = self.data['device'].get('id', '')
                 if not id:
                     id = '热心群众'
-                msg = f'【{s}】{x}红{y}白，总人数{z}，{dt}秒内{ms}\n--来自【{id}】'
-                await bot.prompt(msg)
+                # ，{dt}秒内{ms}
+                message = f'【{s}】{x}红{y}白，超过阈值{n}\n【{id}】'
+                await BOT.prompt(message)
 
         self.state['local'] = [x, y, z]
         await self.heartbeat()
@@ -250,13 +275,14 @@ async def main():
     await runner.setup()
     site = web.TCPSite(runner, port=PORT)
     await site.start()
+    print(f"serving on http://127.0.0.1:{PORT}")
 
     # task = interval_5_sec()
     # asyncio.get_event_loop().create_task(task)
     # asyncio.get_event_loop().create_task(bot.spawn())
 
     # await asyncio.Event().wait()
-    await asyncio.gather(interval_5_sec(), bot.spawn())
+    await asyncio.gather(interval_5_sec(), BOT.spawn())
 
 
 if __name__ == "__main__":

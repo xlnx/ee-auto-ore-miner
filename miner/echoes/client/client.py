@@ -14,11 +14,11 @@ OVERVIEW_IND = cv2.imread(get_static("overview.png"))
 
 class AdbClient(Window):
     def __init__(self,
-                 serial: str,
                  role: str = 'Slave',
                  admin_addr: Optional[str] = None,
-                 user_id: str = '<匿名>') -> None:
-        Window.__init__(self, serial=serial)
+                 user_id: str = '<匿名>',
+                 *args, **kwargs) -> None:
+        Window.__init__(self, *args, **kwargs)
         self._admin = Admin(self,
                             role=role,
                             user_id=user_id,

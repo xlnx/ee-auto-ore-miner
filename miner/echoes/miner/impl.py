@@ -23,7 +23,9 @@ MAX_MINER_RANGE = 19
 # MAX_MINING_HOURS = 12
 
 
-window = Client(serial=f'{config.adb.host}:{config.adb.port}',
+window = Client(serial=config.adb.get('serial', None),
+                host=config.adb.get('host', None),
+                port=config.adb.get('port', None),
                 admin_addr=f'{config.admin.host}:{config.admin.port}',
                 user_id=config.get('id', ''))
 cnt = StorageCounter(6)
@@ -109,7 +111,7 @@ def deploy_mining_task(check: bool = True) -> None:
             return True
         logging.warn('deploy failed, seeking asteroid belts')
     window.overview.open(config.overview.asteroid_belts)
-    asteroid_belts = window.overview.list()
+    asteroid_belts = window.overview.list_fast(5)
     logging.info('asteroid belts: %s', asteroid_belts)
     n = len(asteroid_belts)
     if n > 1:

@@ -1,12 +1,20 @@
 import io
 import logging
+from typing import Optional
 from PIL import Image
 from adbutils import adb
 from .util import sleep
 
 
 class Window():
-    def __init__(self, serial: str) -> None:
+    def __init__(self,
+                 serial: Optional[str] = None,
+                 host: Optional[str] = None,
+                 port: Optional[int] = None) -> None:
+        if serial is None:
+            assert host is not None and port is not None
+            serial = f'{host}:{port}'
+            adb.connect(serial)
         self._serial = serial
         self._adb = adb.device(serial=serial)
         x, y = self._adb.window_size()
