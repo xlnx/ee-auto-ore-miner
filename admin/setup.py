@@ -12,8 +12,8 @@ class BuildPyCommand(build_py):
         cwd = pathlib.Path().absolute()
         js = os.path.join(str(cwd), 'echoes/admind')
         cmds = [
-            # 'yarn install',
-            # 'yarn run build',
+            'yarn install',
+            'yarn run build',
         ]
         for cmd in cmds:
             _, err = subprocess.Popen(
@@ -29,7 +29,7 @@ class BuildPyCommand(build_py):
 
 setup(
     name='echoes-admind',
-    version='1.1.6',
+    version='1.2.0',
     packages=['echoes', 'echoes.admind'],
     include_package_data=True,
     cmdclass={
